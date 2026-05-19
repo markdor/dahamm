@@ -63,14 +63,19 @@ packages/
 
 ## Authentifizierung
 
-Magic Link Flow:
-1. Nutzer gibt E-Mail-Adresse ein
-2. SvelteKit generiert signierten Token, speichert ihn in SQLite
-3. nodemailer schickt Link via Hetzner SMTP
-4. Klick auf Link → Session Cookie (30 Tage)
-5. Keine Passwörter, kein OTP-Abtippen
-
-Nur vorab eingetragene Familien-Mailadressen erhalten Zugang (Whitelist in DB oder `.env`).
+- User kann sich optional über einen neuen Button im Nav Menü einloggen
+- Der Login erfolgt via Angabe der Mailadresse an die dann ein Magic Link geschickt wird
+- Eine Registrierung im herkömmlichen Sinne ist nicht notwendig, sobald ein User angemeldet ist, wird im Header seine Username angezeigt
+- Ein initialer Admin User wird über das .env File mit Username und Mailadresse angegeben
+- Dieser Admin User ist in der DB als für den Login freigebener User aufgeführt (Whitelist) und kann sich im Login Formular anmelden
+- Es gibt eine Admin-Seite, auf der der Admin weitere Mail-Adressen (mit Username und Telegram User-ID) angeben kann, auch diese können sich dann in Zukunft einloggen
+- Magic Link Flow:
+  - Nutzer gibt E-Mail-Adresse ein
+  - befindet sich die Adresse nicht in der Whitelist in der DB, dann passiert nichts. Ansonsten fahre fort.
+  - SvelteKit generiert signierten Token, speichert ihn in SQLite
+  - nodemailer schickt Link via Hetzner SMTP
+  - Klick auf Link → Session Cookie (30 Tage)
+  - Keine Passwörter, kein OTP-Abtippen
 
 ---
 
@@ -79,7 +84,6 @@ Nur vorab eingetragene Familien-Mailadressen erhalten Zugang (Whitelist in DB od
 ```env
 # Telegram
 TELEGRAM_BOT_TOKEN=
-ALLOWED_USER_IDS=          # kommagetrennte Telegram User-IDs
 
 # Anthropic
 ANTHROPIC_API_KEY=
@@ -94,7 +98,6 @@ SMTP_FROM=dahamm@deine-domain.de
 # App
 DATABASE_URL=file:/app/data/dahamm.db
 SESSION_SECRET=            # zufälliger langer String
-ALLOWED_EMAILS=            # kommagetrennte Familien-Mailadressen
 
 # Interne Service-URLs (Docker-intern, nicht ändern)
 WHISPER_URL=http://whisper:8000
