@@ -63,19 +63,65 @@ packages/
 
 ## Authentifizierung
 
-- User kann sich optional über einen neuen Button im Nav Menü einloggen
-- Der Login erfolgt via Angabe der Mailadresse an die dann ein Magic Link geschickt wird
-- Eine Registrierung im herkömmlichen Sinne ist nicht notwendig, sobald ein User angemeldet ist, wird im Header seine Username angezeigt
-- Ein initialer Admin User wird über das .env File mit Username und Mailadresse angegeben
-- Dieser Admin User ist in der DB als für den Login freigebener User aufgeführt (Whitelist) und kann sich im Login Formular anmelden
+- **Closed App – keine anonyme Nutzung.** Jeder nicht eingeloggte Request wird auf `/login` umgeleitet. Außer der `/login`-Route, den Better-Auth-Endpoints unter `/auth/*` und statischen Assets ist nichts öffentlich erreichbar.
+  - Implementierung als globaler Auth-Guard in `hooks.server.ts`: Session prüfen, sonst `throw redirect(302, '/login')`.
+  - Die Login-Seite ist die de-facto-Startseite für nicht eingeloggte User; nach erfolgreichem Login geht es auf `/` (Dashboard).
+  - **Ausnahme `/api/*`**: kein Redirect, sondern Bearer-Token-Check gegen den Bot-Token (siehe unten). Kein/ungültiger Token → `401 Unauthorized`.
+- Im Header (nur sichtbar für eingeloggte User) steht der Username als Drop-Down-Trigger: "Logout" und – falls Admin – zusätzlich "Admin".
+- Der Login erfolgt via Angabe der Mailadresse an die dann ein Magic Link geschickt wird.
+- Eine Registrierung im herkömmlichen Sinne gibt es nicht – Initial ist nur der `.env`-Admin freigeschaltet, weitere User legt der Admin manuell an.
+- Es gibt genau einen Admin User, dieser wird über das .env File mit Username und Mailadresse angegeben
+  - Dieser Admin User ist in der DB als für den Login freigebener User aufgeführt (Whitelist) und kann sich im Login Formular anmelden
+  - der Admin Boot Strap soll bei jedem Containerstart durchgeführt werden, damit der User sich nicht versehentlich aussperren kann
+  - Idempotenz beim Boostrap: Upsert auf E-Mail, der Admin-Flag wird immer auf true gezwungen, alle anderen Felder bleiben unangetastet.
+- das Whitelisting von Usern die sich anmelden dürfen erfolgt über Custom-Fields direkt am Better-Auth-user-Table, keine separate Whitelist-Tabelle.
 - Es gibt eine Admin-Seite, auf der der Admin weitere Mail-Adressen (mit Username und Telegram User-ID) angeben kann, auch diese können sich dann in Zukunft einloggen
-- Magic Link Flow:
+  - diese Admin-Seite kann nur von eingeloggten Usern aufgerufen werden, für die ein Admin Flag in der DB existiert
+  - die Admin Seite erlaubt Full CRUD, also anlegen, löschen und ändern
+  - Pflichtfelder beim Anlegen: **E-Mail und Username**. Telegram-User-ID ist optional (User ohne Bot-Zugriff sind erlaubt).
+  - Ein Admin kann seinen eigenen Eintrag nicht löschen und sich nicht den Admin-Flag entziehen, andere Felder schon.
+  - Beim Löschen eines Users werden alle seine aktiven Sessions sofort mitgelöscht (forced logout) – das Session-Cookie wird beim nächsten Request ungültig.
+- **Bot-Token-Verwaltung** auf der Admin-Seite – damit der Bot-Service die `/api/*`-Endpoints aufrufen darf:
+  - Genau **ein** aktiver Bot-Token zur Zeit (eigene Tabelle `bot_token`, ein Row).
+  - **Generate**: erzeugt `crypto.randomBytes(32)`-hex, zeigt das Klartext-Token **genau einmal** in der UI (kopierbar), speichert in der DB nur den SHA-256-Hash + `createdAt`. Eine neue Generierung invalidiert den alten Token (Row wird ersetzt).
+  - **Revoke**: löscht die Row → Bot kann nicht mehr authentifizieren, bis ein neuer Token generiert wird.
+  - **Anzeige**: Status ("aktiv seit …" oder "kein Token gesetzt") plus optional `lastUsedAt` für Sichtbarkeit, ob der Bot den Token aktuell nutzt.
+  - **Bot-Seite**: Token landet in der Bot-`.env` als `BOT_API_TOKEN`, wird bei jedem App-API-Call als `Authorization: Bearer <token>` mitgeschickt. Bot-Container neu starten nach Rotation.
+  - **Hash-Vergleich**: Auth-Guard hasht den eingehenden Bearer-Token mit SHA-256 und vergleicht via `crypto.timingSafeEqual` mit dem DB-Hash. Kein Bcrypt nötig – die Tokens haben 256 Bit Entropie.
+- Magic Link Flow mit Better-Auth-Plugin `magic-link`, konfiguriert mit **`disableSignUp: true`** – Better Auth legt niemals selbst User an, der einzige Weg in die `user`-Tabelle ist Admin-Bootstrap oder die Admin-Seite
   - Nutzer gibt E-Mail-Adresse ein
+  - es erscheint eine Meldung, dass wenn die Mailadresse gültig ist, eine Mail gesendet wurde
   - befindet sich die Adresse nicht in der Whitelist in der DB, dann passiert nichts. Ansonsten fahre fort.
   - SvelteKit generiert signierten Token, speichert ihn in SQLite
-  - nodemailer schickt Link via Hetzner SMTP
-  - Klick auf Link → Session Cookie (30 Tage)
-  - Keine Passwörter, kein OTP-Abtippen
+  - nodemailer schickt Link via Hetzner SMTP. Läuft der Server lokal (dev aus $app/environment als einziger Schalter), dann wird der Magic Link in der Konsole geloggt und keine Mail gesendet, damit SMTP nicht konfiguriert sein muss
+  - Klick auf Link → Session Cookie (30 Tage), Magic Link wird invalidiert
+  - der Magic Link ist 24 Stunden lang gültig
+- als Frameworks bzw. Infrastruktur nutze
+  - Datenbank: SQLite (mit better-sqlite3) mit der DB auf einem named Volume in der compose.yaml
+  - ORM Mapper: Drizzle
+  - Authentifizierung: Better Auth
+- **DB-Migrationen** via Drizzle Kit, automatisch beim App-Start – kein separater Deploy-Schritt
+  - Schema in `src/lib/server/db/schema.ts` → `npx drizzle-kit generate` erzeugt versioniertes SQL-File in `./drizzle/`
+  - Migration-Files werden committed (reviewbar im PR)
+  - Boot-Reihenfolge im Container: `migrate()` → Admin-Bootstrap → SvelteKit-Server
+  - Drizzle pflegt eine `__drizzle_migrations`-Tabelle, bereits angewendete Migrationen werden übersprungen (idempotent)
+  - **Nicht** verwendet: `drizzle-kit push` – kein Audit-Trail, kann in Prod still destruktiv sein
+- **`/login`-Route** als Heimat des Mail-Eingabe-Formulars und der Fehleranzeige – gleichzeitig die Landing-Page für nicht eingeloggte User (siehe Auth-Guard oben).
+- **Rate-Limiting** über das eingebaute Better-Auth-Modul, persistiert in derselben SQLite-DB (kein Eigenbau, keine zweite Storage-Schicht):
+  - pro IP auf `/sign-in/magic-link`: **5 Requests / 15 min** (Startwert, tunable) – bremst breite Enumeration und SMTP-Missbrauch
+  - pro Mail-Adresse auf demselben Endpoint: **3 Requests / 1 h** (Startwert, tunable) – verhindert Flutung eines einzelnen Postfachs trotz IP-Rotation
+  - alle anderen Auth-Routen: Better-Auth-Default (10 req / 10 s) reicht
+  - **Hinter Traefik unbedingt** den Client-IP-Header korrekt durchreichen (`X-Forwarded-For`), in SvelteKit über `ADDRESS_HEADER` des Node-Adapters – sonst zählen alle Requests als dieselbe IP
+- **Timing-Equalization gegen E-Mail-Enumeration** – Whitelist-Hit vs. Miss darf nicht über die Response-Zeit erkennbar sein:
+  - **Mail-Versand fire-and-forget**: `transporter.sendMail()` nicht awaiten, sofort 200 zurück; SMTP-Fehler landen im Server-Log, nicht in der Response. Damit fällt die SMTP-Latenz (200–2000 ms) als dominanter Zeit-Faktor komplett raus
+  - **Identischer Code-Pfad bei Hit und Miss**: auch bei unbekannter Mail eine Dummy-Token-Berechnung ausführen (`crypto.randomBytes(32)` + Zeitstempel, nicht persistieren); Netz-Jitter überdeckt den verbleibenden Mikro-Sekunden-Unterschied
+  - **Kein** künstliches `await sleep(800ms)` – bricht, sobald SMTP langsamer wird, und kostet UX
+  - Response-Text immer identisch: „Wenn die Adresse registriert ist, wurde ein Link verschickt." – egal ob Hit oder Miss
+- **Magic-Link-Fehlerbehandlung beim Klick** via Better Auths `callbackURL` / `errorCallbackURL`:
+  - Erfolg → Redirect zu `/`, Session-Cookie ist gesetzt, Header zeigt Username
+  - Fehler → Redirect zu `/login?error=expired|invalid|used`
+  - Die `/login`-Seite liest den Query-Param und zeigt über dem Formular eine Info-Box: „Dieser Link ist abgelaufen oder wurde bereits verwendet. Gib deine E-Mail erneut ein, um einen neuen zu erhalten."
+  - Alle drei Error-Codes zeigen denselben Text (keine Zusatz-Info für Angreifer), Unterscheidung nur im Server-Log
 
 ---
 
@@ -88,7 +134,7 @@ TELEGRAM_BOT_TOKEN=
 # Anthropic
 ANTHROPIC_API_KEY=
 
-# SMTP (Hetzner Mail)
+# SMTP (Hetzner Mail) – in Dev nicht nötig, Magic Link wird dann in der Konsole geloggt
 SMTP_HOST=mail.your-server.de
 SMTP_PORT=465
 SMTP_USER=
@@ -97,7 +143,14 @@ SMTP_FROM=dahamm@deine-domain.de
 
 # App
 DATABASE_URL=file:/app/data/dahamm.db
-SESSION_SECRET=            # zufälliger langer String
+BASE_URL=https://dahamm.markdor.net   # öffentliche Basis-URL der App, dient sowohl
+                                      # Better Auth (Magic-Link-Erzeugung) als auch
+                                      # SvelteKit (origin / CSRF) als einzige Quelle
+
+# Auth
+BETTER_AUTH_SECRET=        # zufälliger langer String (z. B. `openssl rand -hex 32`)
+ADMIN_EMAIL=               # E-Mail des initialen Admin-Users (Bootstrap)
+ADMIN_USERNAME=            # Username des initialen Admin-Users (nur beim ersten Anlegen verwendet)
 
 # Interne Service-URLs (Docker-intern, nicht ändern)
 WHISPER_URL=http://whisper:8000
