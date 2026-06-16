@@ -1,0 +1,25 @@
+{
+	"name": "dahamm",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Selbst gehostete Familien-App - Dashboard, Einkaufsliste, Essensplaner, Todos, steuerbar per Telegram-Bot.",
+	"license": "AGPL-3.0-only",
+	"author": "markdor",
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"workspaces": [
+		"packages/app"
+	],
+	"scripts": {
+		"dev": "npm run dev -w @dahamm/app",
+		"build": "npm run build --workspaces --if-present",
+		"check": "npm run check --workspaces --if-present",
+		"lint": "npm run lint --workspaces --if-present",
+		"format": "npm run format --workspaces --if-present",
+		"test": "npm run test --workspaces --if-present",
+		"test:unit": "npm run test:unit --workspaces --if-present",
+		"test:e2e": "npm run test:e2e --workspaces --if-present"
+	}
+}
