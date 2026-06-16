@@ -4,6 +4,8 @@ Selbst gehostete Familien-App mit Dashboard, Einkaufsliste, Essensplaner,
 Todos und Notizen – bedienbar per Web-PWA und Telegram-Bot mit
 Spracheingabe (Whisper + Claude AI).
 
+git commit -m "Initial SvelteKit setup with typescript, prettier, eslint, vitest, playwright, tailwindcss, sveltekit-adapter"
+
 ## Architektur
 
 Monorepo via npm Workspaces, drei Docker-Container hinter Traefik v3:
