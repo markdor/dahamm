@@ -8,6 +8,9 @@ node_modules
 /.svelte-kit
 /build
 
+# Test coverage
+/coverage
+
 # OS
 .DS_Store
 Thumbs.db
@@ -16,7 +19,13 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.local.example
 !.env.test
+
+# Local SQLite database (dev)
+*.db
+*.db-shm
+*.db-wal
 
 # Vite
 vite.config.js.timestamp-*

@@ -13,8 +13,10 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright install && playwright test"
+		"test:e2e": "playwright install && playwright test",
+		"db:generate": "drizzle-kit generate"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -23,8 +25,13 @@
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/vite": "^4.3.0",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^24",
+		"@types/nodemailer": "^8.0.1",
 		"@vitest/browser-playwright": "^4.1.8",
+		"@vitest/coverage-v8": "^4.1.8",
+		"dotenv": "^17.4.2",
+		"drizzle-kit": "^0.31.10",
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.19.0",
@@ -41,5 +48,13 @@
 		"vite": "^8.0.16",
 		"vitest": "^4.1.8",
 		"vitest-browser-svelte": "^2.1.1"
+	},
+	"dependencies": {
+		"better-auth": "^1.6.17",
+		"better-sqlite3": "^12.10.1",
+		"drizzle-orm": "^0.45.2",
+		"nodemailer": "^8.0.11",
+		"pino": "^10.3.1",
+		"pino-pretty": "^13.1.3"
 	}
 }
