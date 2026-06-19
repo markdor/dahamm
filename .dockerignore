@@ -1,0 +1,25 @@
+# Build context is the repo root. Keep it lean: deps are installed inside the
+# image, build artifacts and local state must not leak in.
+**/node_modules
+**/build
+**/.svelte-kit
+**/coverage
+**/test-results
+**/playwright-report
+
+# Local SQLite databases (dev/e2e) — never bake these into the image
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.db-journal
+
+# Secrets and local env, but keep the examples for reference
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.local.example
+
+.git
+.github
+.vscode
+**/*.log

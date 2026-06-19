@@ -8,9 +8,11 @@ const DB_PATH = './e2e.db';
 
 // The local Playwright config seeds ./e2e.db on the host so the test can read
 // the magic-link token straight out of the verification table. Against a
-// deployed container the DB lives on a named volume and is unreachable, so we
-// skip the flow there instead of failing.
-const hasLocalDb = existsSync(DB_PATH);
+// deployed container (E2E_TARGET=docker) the DB lives on a named volume and is
+// unreachable, so we skip the flow there instead of failing. We also skip if no
+// local DB exists at all (e.g. a run against a remote server).
+const isContainerRun = process.env.E2E_TARGET === 'docker';
+const hasLocalDb = !isContainerRun && existsSync(DB_PATH);
 
 /**
  * Rebuild the verify URL the same way Better Auth's magic-link plugin does.

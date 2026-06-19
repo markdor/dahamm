@@ -16,6 +16,7 @@
 		"test:coverage": "vitest run --coverage",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright install && playwright test",
+		"docker:test": "playwright test --config=playwright.docker.config.ts",
 		"db:generate": "drizzle-kit generate"
 	},
 	"devDependencies": {
