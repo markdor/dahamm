@@ -17,6 +17,25 @@ export default defineConfig({
 		})
 	],
 	test: {
+		// Any accidental import of the real DB layer during tests stays in memory.
+		env: { DB_PATH: ':memory:' },
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'lcov', 'html', 'json', 'json-summary'],
+			include: ['src/**/*.{ts,svelte}'],
+			exclude: [
+				'src/**/*.{test,spec}.{js,ts}',
+				'src/**/*.e2e.ts',
+				'src/app.d.ts',
+				'src/routes/+layout.svelte',
+				// Wiring / config / module-init side effects — exercised via e2e, not units.
+				'src/hooks.server.ts',
+				'src/lib/server/auth.ts',
+				'src/lib/server/db/index.ts',
+				'src/lib/server/logger.ts',
+				'src/lib/auth-client.ts'
+			]
+		},
 		expect: { requireAssertions: true },
 		projects: [
 			{

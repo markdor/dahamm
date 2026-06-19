@@ -85,7 +85,7 @@ packages/
   - Genau **ein** aktiver Bot-Token zur Zeit (eigene Tabelle `bot_token`, ein Row).
   - **Generate**: erzeugt `crypto.randomBytes(32)`-hex, zeigt das Klartext-Token **genau einmal** in der UI (kopierbar), speichert in der DB nur den SHA-256-Hash + `createdAt`. Eine neue Generierung invalidiert den alten Token (Row wird ersetzt).
   - **Revoke**: löscht die Row → Bot kann nicht mehr authentifizieren, bis ein neuer Token generiert wird.
-  - **Anzeige**: Status ("aktiv seit …" oder "kein Token gesetzt") plus optional `lastUsedAt` für Sichtbarkeit, ob der Bot den Token aktuell nutzt.
+  - **Anzeige**: Status ("aktiv seit …" oder "kein Token gesetzt") plus `lastUsedAt` für Sichtbarkeit, ob der Bot den Token aktuell nutzt.
   - **Bot-Seite**: Token landet in der Bot-`.env` als `BOT_API_TOKEN`, wird bei jedem App-API-Call als `Authorization: Bearer <token>` mitgeschickt. Bot-Container neu starten nach Rotation.
   - **Hash-Vergleich**: Auth-Guard hasht den eingehenden Bearer-Token mit SHA-256 und vergleicht via `crypto.timingSafeEqual` mit dem DB-Hash. Kein Bcrypt nötig – die Tokens haben 256 Bit Entropie.
 - Magic Link Flow mit Better-Auth-Plugin `magic-link`, konfiguriert mit **`disableSignUp: true`** – Better Auth legt niemals selbst User an, der einzige Weg in die `user`-Tabelle ist Admin-Bootstrap oder die Admin-Seite
@@ -97,9 +97,9 @@ packages/
   - Klick auf Link → Session Cookie (30 Tage), Magic Link wird invalidiert
   - der Magic Link ist 24 Stunden lang gültig
 - als Frameworks bzw. Infrastruktur nutze
-  - Datenbank: SQLite (mit better-sqlite3) mit der DB auf einem named Volume in der compose.yaml
+  - Datenbank: better-sqlite3 mit der DB auf einem named Volume in der compose.yaml
   - ORM Mapper: Drizzle
-  - Authentifizierung: Better Auth
+  - Authentifizierung: better-auth
 - **DB-Migrationen** via Drizzle Kit, automatisch beim App-Start – kein separater Deploy-Schritt
   - Schema in `src/lib/server/db/schema.ts` → `npx drizzle-kit generate` erzeugt versioniertes SQL-File in `./drizzle/`
   - Migration-Files werden committed (reviewbar im PR)
