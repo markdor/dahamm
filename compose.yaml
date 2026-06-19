@@ -1,0 +1,19 @@
+# Local build/run of the app container, mirroring gritshot's compose.yaml.
+# The full production stack (bot + whisper + Traefik + named external volume,
+# per CLAUDE.md) comes later once those services exist.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: packages/app/Dockerfile
+    image: dahamm-app:local
+    container_name: dahamm-app
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file: packages/app/.env
+    volumes:
+      - dahamm-data:/data
+
+volumes:
+  dahamm-data:
