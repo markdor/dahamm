@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
+	import logo from '$lib/assets/dahamm-320.png';
 
 	let { data } = $props();
 
@@ -41,7 +42,8 @@
 </svelte:head>
 
 <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-6 py-12">
-	<header class="space-y-2 text-center">
+	<header class="flex flex-col items-center gap-3 text-center">
+		<img src={logo} alt="Dahamm" class="h-40 w-auto" />
 		<h1 class="text-3xl font-semibold tracking-tight">Dahamm</h1>
 		<p class="text-sm text-slate-500">Melde dich mit deiner E-Mail-Adresse an.</p>
 	</header>
@@ -87,7 +89,7 @@
 			<button
 				type="submit"
 				disabled={submitting}
-				class="w-full rounded-xl bg-slate-900 px-5 py-3 text-base font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+				class="w-full rounded-xl bg-brand px-5 py-3 text-base font-medium text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
 			>
 				{submitting ? 'Wird gesendet …' : 'Link anfordern'}
 			</button>
