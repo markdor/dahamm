@@ -40,12 +40,12 @@ export async function sendMagicLinkMail(email: string, url: string): Promise<voi
 		text:
 			`Klicke auf den folgenden Link, um dich bei Dahamm anzumelden. ` +
 			`Der Link ist 24 Stunden gültig und kann einmal verwendet werden.\n\n${url}\n\n` +
-			`Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.`,
+			`Falls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.`,
 		html:
 			`<p>Klicke auf den folgenden Link, um dich bei Dahamm anzumelden. ` +
 			`Der Link ist 24 Stunden gültig und kann einmal verwendet werden.</p>` +
 			`<p><a href="${url}">Bei Dahamm anmelden</a></p>` +
-			`<p>Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.</p>`
+			`<p>Falls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.</p>`
 	});
 
 	logger.info({ messageId: info.messageId, email }, 'magic link email sent');
