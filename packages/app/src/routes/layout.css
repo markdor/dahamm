@@ -1,1 +1,36 @@
 @import 'tailwindcss';
+
+/*
+ * Dahamm-Farbschema: hell, pastellig, gedeckte Eukalyptustöne.
+ *
+ * Die App nutzt durchgängig die `slate`-Neutralpalette (Hintergründe, Ränder,
+ * Text, Primär-Buttons via slate-900). Statt jede Komponente anzufassen,
+ * überschreiben wir die slate-Skala mit einer entsättigten Salbei-/Eukalyptus-
+ * Skala – so bekommt die gesamte UI einen einheitlichen, gedeckten Grünstich.
+ * Semantische Akzente (emerald/amber/red) bleiben für Status-Hinweise erhalten.
+ */
+@theme {
+	--color-slate-50: #f3f6f3;
+	--color-slate-100: #e4ece6;
+	--color-slate-200: #c8d8cc;
+	--color-slate-300: #a4bdaa;
+	--color-slate-400: #789a82;
+	--color-slate-500: #5a7d64;
+	--color-slate-600: #47654f;
+	--color-slate-700: #3a5141;
+	--color-slate-800: #314236;
+	--color-slate-900: #2a382e;
+	--color-slate-950: #161f19;
+
+	/* Emerald (Erfolg/Token-Anzeige) leicht an den Eukalyptus-Ton angeglichen,
+	   damit es nicht grell aus dem gedeckten Schema fällt. */
+	--color-emerald-50: #eef6f0;
+	--color-emerald-300: #9ccaab;
+	--color-emerald-900: #2c4734;
+
+	/* Primär-/Markenfarbe für gefüllte Aktions-Buttons: mittleres Eukalyptusgrün.
+	   Bewusst von der Textfarbe (slate-900) entkoppelt – slate-900 muss für
+	   lesbaren Text dunkel bleiben, der Button soll heller/grüner wirken. */
+	--color-brand: #47654f;
+	--color-brand-hover: #3a5141;
+}
