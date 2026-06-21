@@ -32,13 +32,15 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
-          path: coverage/
+          path: packages/app/coverage/
 
       # Coverage-Summary direkt im PR/Action-Log
+      # Die App liegt im Workspace packages/app, daher dort nach Report + vite.config suchen.
       - name: Coverage Summary
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: packages/app
 
   release:
     needs: test
