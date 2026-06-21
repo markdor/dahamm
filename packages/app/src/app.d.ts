@@ -13,6 +13,9 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	// Injected at build time via Vite `define` (siehe vite.config.ts).
+	const __APP_VERSION__: string;
 }
 
 export {};

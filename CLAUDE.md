@@ -235,15 +235,29 @@ Aufbau analog zu `C:\Users\Markus\git\gritshot`.
 
 ### GitHub Actions (`.github/workflows/ci.yml`)
 
-Drei Jobs, analog gritshot:
+Trigger: `on: push` (alle Branches) + `workflow_dispatch`. Drei Jobs, analog gritshot:
 
 1. **`test`** – Node 24, `npm ci`, `npx playwright install --with-deps`,
    `npm run test:coverage`, `npm run test:e2e`, Coverage als Artefakt hochladen,
    PR-Kommentar via `davelosert/vitest-coverage-report-action`.
-2. **`release`** – nur auf `main`, `cycjimmy/semantic-release-action` mit
+2. **`release`** – `needs: test`, nur auf `main`, `cycjimmy/semantic-release-action` mit
    `@semantic-release/git`, GitHub App Token (`CICD_CLIENT_ID` / `CICD_PRIVATE_KEY`).
-3. **`docker`** – nach erfolgreichem Test (und Release oder Branch ≠ main):
-   Build & Push nach `ghcr.io/markdor/dahamm` mit Tags `develop` / `latest` / `<version>`.
+   Exportiert die Outputs `new_release_published` / `new_release_version` für den
+   nachgelagerten Docker-Job.
+3. **`docker`** – `needs: [test, release]`, läuft **nur auf `main` und nur wenn ein neues
+   Release publiziert wurde** (`needs.test.result == 'success' && github.ref == 'refs/heads/main'
+   && needs.release.outputs.new_release_published == 'true'`):
+   Build & Push nach `ghcr.io/markdor/dahamm` mit Tags `latest` / `<version>`.
+
+Action-Versionen sinngemäß auf aktuellem Stand pinnen (gritshot aktuell: `checkout@v6`,
+`setup-node@v6`, `upload-artifact@v7`, `create-github-app-token@v3`,
+`semantic-release-action@v6`, `docker/*` v4/v6/v7).
+
+### Dependabot Auto-Merge (`.github/workflows/dependabot-automerge.yml`)
+
+Eigener Workflow analog gritshot: `on: pull_request`, nur für PRs von `dependabot[bot]`.
+Holt die Metadaten via `dependabot/fetch-metadata`, aktiviert Auto-Merge (squash) für
+`version-update:semver-patch`-Updates (`gh pr merge --auto --squash`).
 
 ### Logging
 

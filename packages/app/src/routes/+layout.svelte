@@ -1,13 +1,17 @@
 <script lang="ts">
 	import './layout.css';
 	import Header from '$lib/components/Header.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 
 	let { data, children } = $props();
 </script>
 
-<div class="min-h-screen bg-slate-50 text-slate-900">
+<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
 	{#if data.user}
 		<Header user={data.user} />
 	{/if}
-	{@render children()}
+	<main class="flex-1">
+		{@render children()}
+	</main>
+	<Footer />
 </div>
