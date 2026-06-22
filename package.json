@@ -1,7 +1,7 @@
 {
 	"name": "dahamm",
 	"private": true,
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Selbst gehostete Familien-App - Dashboard, Einkaufsliste, Essensplaner, Todos, steuerbar per Telegram-Bot.",
 	"license": "AGPL-3.0-only",
 	"author": "markdor",
