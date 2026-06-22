@@ -247,7 +247,9 @@ Trigger: `on: push` (alle Branches) + `workflow_dispatch`. Drei Jobs, analog gri
 3. **`docker`** – `needs: [test, release]`, läuft **nur auf `main` und nur wenn ein neues
    Release publiziert wurde** (`needs.test.result == 'success' && github.ref == 'refs/heads/main'
    && needs.release.outputs.new_release_published == 'true'`):
-   Build & Push nach `ghcr.io/markdor/dahamm` mit Tags `latest` / `<version>`.
+   Build & Push nach `ghcr.io/markdor/dahamm-app` mit Tags `latest` / `<version>`.
+   Pro Service ein eigenes Image mit `dahamm-`-Präfix (`dahamm-app`, später `dahamm-bot`,
+   `dahamm-whisper`); Owner/Repo-Präfix bleibt dynamisch via `${{ github.repository }}-<service>`.
 
 Action-Versionen sinngemäß auf aktuellem Stand pinnen (gritshot aktuell: `checkout@v6`,
 `setup-node@v6`, `upload-artifact@v7`, `create-github-app-token@v3`,

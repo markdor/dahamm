@@ -107,7 +107,7 @@ jobs:
       - uses: docker/metadata-action@v6
         id: meta
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}-app
           tags: |
             type=raw,value=latest,enable=${{ needs.release.outputs.new_release_published == 'true' }}
             type=raw,value=${{ needs.release.outputs.new_release_version }},enable=${{ needs.release.outputs.new_release_published == 'true' }}
