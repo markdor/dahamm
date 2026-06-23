@@ -4,7 +4,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { verifyBotToken } from '$lib/server/botToken';
-import { evaluateGuard } from '$lib/server/guard';
+import { evaluateGuard, isApiPath } from '$lib/server/guard';
 
 // Lets Better Auth own everything under /auth/* (sign-in, magic-link verify, …).
 // For all other paths svelteKitHandler just calls resolve() and the chain
@@ -34,7 +34,7 @@ function isBearerAuthorized(request: Request): boolean {
 const guardHandle: Handle = ({ event, resolve }) => {
 	const decision = evaluateGuard(event.url.pathname, {
 		authenticated: Boolean(event.locals.user),
-		bearerAuthorized: event.url.pathname.startsWith('/api') && isBearerAuthorized(event.request)
+		bearerAuthorized: isApiPath(event.url.pathname) && isBearerAuthorized(event.request)
 	});
 
 	switch (decision.action) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateGuard } from './guard';
+import { evaluateGuard, isApiPath } from './guard';
 
 describe('evaluateGuard', () => {
 	describe('/api/* (bot surface)', () => {
@@ -34,6 +34,35 @@ describe('evaluateGuard', () => {
 			expect(
 				evaluateGuard('/auth/sign-in/magic-link', { authenticated: false, bearerAuthorized: false })
 			).toEqual({ action: 'resolve' });
+		});
+
+		it('treats the bare /auth path as public', () => {
+			expect(evaluateGuard('/auth', { authenticated: false, bearerAuthorized: false })).toEqual({
+				action: 'resolve'
+			});
+		});
+	});
+
+	describe('prefix matching does not leak (fail-open) to sibling paths', () => {
+		it('does not treat /author as a public Better Auth endpoint', () => {
+			// startsWith('/auth') would wrongly let this through unauthenticated.
+			expect(evaluateGuard('/author', { authenticated: false, bearerAuthorized: false })).toEqual({
+				action: 'redirect',
+				location: '/login'
+			});
+		});
+
+		it('does not treat /apidocs as the bot surface', () => {
+			expect(isApiPath('/apidocs')).toBe(false);
+			expect(evaluateGuard('/apidocs', { authenticated: false, bearerAuthorized: false })).toEqual({
+				action: 'redirect',
+				location: '/login'
+			});
+		});
+
+		it('recognises /api itself and sub-paths as the bot surface', () => {
+			expect(isApiPath('/api')).toBe(true);
+			expect(isApiPath('/api/shopping')).toBe(true);
 		});
 	});
 

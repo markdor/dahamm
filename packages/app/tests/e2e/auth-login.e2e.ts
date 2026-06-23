@@ -1,65 +1,34 @@
 import { test, expect } from '@playwright/test';
-import Database from 'better-sqlite3';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
-// Must match playwright.config.ts (ADMIN_EMAIL + DB_PATH).
+// Must match playwright.config.ts (ADMIN_EMAIL + MAGIC_LINK_DEBUG_PATH).
 const ADMIN_EMAIL = 'admin@e2e.test';
-const DB_PATH = './e2e.db';
+const MAGIC_LINK_FILE = './e2e-magic-link.log';
 
-// The local Playwright config seeds ./e2e.db on the host so the test can read
-// the magic-link token straight out of the verification table. Against a
-// deployed container (E2E_TARGET=docker) the DB lives on a named volume and is
-// unreachable, so we skip the flow there instead of failing. We also skip if no
-// local DB exists at all (e.g. a run against a remote server).
+// Tokens are stored hashed, so the plaintext is no longer recoverable from the
+// DB. Instead the production build appends the full magic-link URL to a capture
+// file when MAGIC_LINK_DEBUG_PATH is set (only the local Playwright config sets
+// it). Against a deployed container (E2E_TARGET=docker) that file lives on the
+// container and is unreachable, so we skip the flow there instead of failing.
 const isContainerRun = process.env.E2E_TARGET === 'docker';
-const hasLocalDb = !isContainerRun && existsSync(DB_PATH);
 
 /**
- * Rebuild the verify URL the same way Better Auth's magic-link plugin does.
- * Our auth is mounted at basePath `/auth`, so the verify endpoint is
- * `/auth/magic-link/verify`. With `storeToken: "plain"` (the default) the
- * verification row stores the raw token in `identifier`.
+ * The server appends one magic-link URL per request to the capture file. The
+ * test only ever requests one link, so the last non-empty line is ours.
  */
-function buildVerifyUrl(token: string, baseURL: string): string {
-	const url = new URL('/auth/magic-link/verify', baseURL);
-	url.searchParams.set('token', token);
-	url.searchParams.set('callbackURL', '/');
-	url.searchParams.set('errorCallbackURL', '/login?error=invalid');
-	return url.toString();
-}
-
-/**
- * In the verification table `identifier` is the plain token and `value` is JSON
- * holding the email ({ email, name }). Grab the newest row for this address.
- */
-function readLatestTokenFor(email: string): string | null {
-	const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
-	try {
-		const row = db
-			.prepare(
-				`SELECT identifier, value FROM verification
-				 WHERE value LIKE ?
-				 ORDER BY created_at DESC, expires_at DESC
-				 LIMIT 1`
-			)
-			.get(`%${email}%`) as { identifier: string; value: string } | undefined;
-		if (!row) return null;
-		try {
-			const parsed = JSON.parse(row.value);
-			if (parsed?.email !== email) return null;
-		} catch {
-			return null;
-		}
-		return row.identifier;
-	} finally {
-		db.close();
-	}
+function readLatestMagicLink(): string | null {
+	if (!existsSync(MAGIC_LINK_FILE)) return null;
+	const lines = readFileSync(MAGIC_LINK_FILE, 'utf8')
+		.split('\n')
+		.map((l) => l.trim())
+		.filter(Boolean);
+	return lines.at(-1) ?? null;
 }
 
 test.describe('Magic-Link-Login', () => {
 	test.skip(
-		!hasLocalDb,
-		'kein Host-Zugriff auf die Magic-Link-DB — Lauf gegen Remote-Server oder Container'
+		isContainerRun,
+		'kein Host-Zugriff auf die Magic-Link-Capture-Datei — Lauf gegen Container'
 	);
 
 	test('Admin meldet sich per Magic Link an und sieht die Begrüßungsseite', async ({
@@ -79,16 +48,16 @@ test.describe('Magic-Link-Login', () => {
 		// Immer dieselbe (neutrale) Bestätigung – egal ob Whitelist-Hit oder -Miss.
 		await expect(page.getByRole('status')).toContainText(/wurde ein Link verschickt/i);
 
-		// Der Token wird vor dem Mailversand synchron in die DB geschrieben; kurz pollen.
-		let token: string | null = null;
-		for (let i = 0; i < 30 && !token; i++) {
-			token = readLatestTokenFor(ADMIN_EMAIL);
-			if (!token) await new Promise((r) => setTimeout(r, 100));
+		// Die Magic-Link-URL wird beim Request in die Capture-Datei geschrieben; kurz pollen.
+		let magicLink: string | null = null;
+		for (let i = 0; i < 30 && !magicLink; i++) {
+			magicLink = readLatestMagicLink();
+			if (!magicLink) await new Promise((r) => setTimeout(r, 100));
 		}
-		expect(token, 'Magic-Link-Token sollte in der verification-Tabelle landen').toBeTruthy();
+		expect(magicLink, 'Magic-Link-URL sollte in der Capture-Datei landen').toBeTruthy();
 
 		// Link aufrufen -> Session-Cookie gesetzt, Redirect aufs Dashboard.
-		await page.goto(buildVerifyUrl(token!, baseURL!));
+		await page.goto(magicLink!);
 		await expect(page).toHaveURL(new URL('/', baseURL!).toString());
 
 		// Begrüßungsseite prüft Username im Header und in der Überschrift.
