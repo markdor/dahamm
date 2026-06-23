@@ -32,3 +32,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 # Playwright
 test-results
+# E2E magic-link capture (MAGIC_LINK_DEBUG_PATH)
+e2e-magic-link.log

@@ -75,6 +75,15 @@ export const botToken = sqliteTable('bot_token', {
 	lastUsedAt: integer('last_used_at', { mode: 'timestamp' })
 });
 
+// Per-email throttle for magic-link requests. Better Auth's built-in rate
+// limiter only buckets per IP+path, so flooding a single mailbox from rotating
+// IPs would slip through. One row per email, rolling fixed window.
+export const magicLinkThrottle = sqliteTable('magic_link_throttle', {
+	email: text('email').primaryKey(),
+	count: integer('count').notNull(),
+	windowStart: integer('window_start', { mode: 'timestamp' }).notNull()
+});
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Session = typeof session.$inferSelect;

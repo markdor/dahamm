@@ -138,8 +138,8 @@ ANTHROPIC_API_KEY=
 SMTP_HOST=mail.your-server.de
 SMTP_PORT=465
 SMTP_USER=
-SMTP_PASSWORD=
-SMTP_FROM=dahamm@deine-domain.de
+SMTP_PASS=
+SMTP_FROM=dahamm@your-server.de
 
 # App
 DATABASE_URL=file:/app/data/dahamm.db
@@ -148,7 +148,7 @@ BASE_URL=https://dahamm.markdor.net   # öffentliche Basis-URL der App, dient so
                                       # SvelteKit (origin / CSRF) als einzige Quelle
 
 # Auth
-BETTER_AUTH_SECRET=        # zufälliger langer String (z. B. `openssl rand -hex 32`)
+AUTH_SECRET=        # zufälliger langer String (z. B. `openssl rand -hex 32`)
 ADMIN_EMAIL=               # E-Mail des initialen Admin-Users (Bootstrap)
 ADMIN_USERNAME=            # Username des initialen Admin-Users (nur beim ersten Anlegen verwendet)
 
