@@ -3,7 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
-import { dev } from '$app/environment';
+import { building, dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { appendFileSync } from 'node:fs';
@@ -17,8 +17,10 @@ const baseURL = env.BASE_URL ?? 'http://localhost:5173';
 
 // Fail fast instead of silently signing cookies and tokens with a public,
 // well-known fallback secret. In dev the placeholder is fine; in production a
-// missing secret is a hard configuration error.
-if (!env.AUTH_SECRET && !dev) {
+// missing secret is a hard configuration error. The `building` guard keeps this
+// from firing during `vite build` (where env vars are deliberately absent) – it
+// must only break at actual server startup, not at build time.
+if (!env.AUTH_SECRET && !dev && !building) {
 	throw new Error('AUTH_SECRET must be set in production');
 }
 const secret = env.AUTH_SECRET ?? 'dev-secret-do-not-use-in-production';
