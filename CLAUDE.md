@@ -61,6 +61,32 @@ packages/
 
 ---
 
+## UI Design
+
+- Klar und minimalistisch, kein visuelles Rauschen
+- **Mobile-first** – primäres Endgerät ist das Smartphone, Touch-Targets großzügig
+- Desktop-Layout darf vorhanden sein, hat aber niedrigere Priorität
+- Farbschema: gedeckte Eukalyptus-/Salbei-Palette (slate-Skala überschrieben, siehe `layout.css`), semantische Akzente nur für Status (Amber „heute", Brand-Grün für Hauptaktion)
+
+### Dashboard (Startseite `/`)
+
+Überblicks-Seite, keine Arbeitsfläche. Aufbau von oben nach unten:
+
+1. **Header** – App-Name links, Username-Dropdown rechts (Logout, ggf. Admin)
+2. **Begrüßung** + Datum
+3. **Quick-Add** – ein Eingabefeld zum schnellen Hinzufügen (Web-Pendant zum Bot)
+4. **Modul-Karten** (je eine pro Modul, antippbar → Detailseite), jeweils mit Icon, Titel,
+   Status-Pille (offene Anzahl) und 2–3 Zeilen Vorschau:
+   - Einkaufsliste (offene Posten)
+   - Todos (mit „heute"-Markierung bei Tagesfrist)
+   - Essensplaner (heutiges Gericht + Wochenstreifen)
+   - Notizen (letzte Einträge)
+5. **Hinweis-Leiste** – Einträge auch per Telegram & Sprachnachricht möglich
+
+Referenz-Mockup (heller Modus, Eukalyptus): ![Dahamm Dashboard Mockup](docs/ui/dashboard-mockup.png)
+
+---
+
 ## Authentifizierung
 
 - **Closed App – keine anonyme Nutzung.** Jeder nicht eingeloggte Request wird auf `/login` umgeleitet. Außer der `/login`-Route, den Better-Auth-Endpoints unter `/auth/*` und statischen Assets ist nichts öffentlich erreichbar.
