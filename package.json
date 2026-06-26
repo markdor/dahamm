@@ -10,7 +10,8 @@
 		"node": ">=24"
 	},
 	"workspaces": [
-		"packages/app"
+		"packages/app",
+		"packages/shared"
 	],
 	"scripts": {
 		"dev": "npm run dev -w @dahamm/app",

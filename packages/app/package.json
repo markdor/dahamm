@@ -51,6 +51,7 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
+		"@dahamm/shared": "*",
 		"better-auth": "^1.6.20",
 		"better-sqlite3": "^12.11.1",
 		"drizzle-orm": "^0.45.2",
