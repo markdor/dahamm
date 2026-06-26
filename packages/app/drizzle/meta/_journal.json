@@ -1,20 +1,20 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1781704719526,
-      "tag": "0000_initial_auth_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1782213390628,
-      "tag": "0001_free_lucky_pierre",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1781704719526,
+			"tag": "0000_initial_auth_schema",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1782213390628,
+			"tag": "0001_free_lucky_pierre",
+			"breakpoints": true
+		}
+	]
 }

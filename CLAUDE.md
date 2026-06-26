@@ -39,7 +39,7 @@ packages/
 ### `app` – SvelteKit
 - Dashboard mit den Modulen: Einkaufsliste, Todos, Essensplaner, Notizen
 - API-Endpunkte für den Bot:
-  - `POST /api/shopping` – `{ items: [{ item, quantity }] }`
+  - `POST /api/shopping` – `{ items: [{ item }] }`
   - `POST /api/todos`    – `{ todos: [{ title, dueDate? }] }`
   - `POST /api/meals`    – `{ meals: [{ day, meal }] }`
 - Auth: Magic Link per Mail (nodemailer + Hetzner SMTP)
@@ -74,7 +74,7 @@ packages/
 
 1. **Header** – App-Name links, Username-Dropdown rechts (Logout, ggf. Admin)
 2. **Begrüßung** + Datum
-3. **Quick-Add** – ein Eingabefeld zum schnellen Hinzufügen (Web-Pendant zum Bot)
+3. **Quick-Add** – ein Eingabefeld zum schnellen Hinzufügen (Web-Pendant zum Bot); der „+"-Button öffnet ein Dropdown zur Auswahl des Ziels (Einkaufsliste, später Todos/Essensplaner)
 4. **Modul-Karten** (je eine pro Modul, antippbar → Detailseite), jeweils mit Icon, Titel,
    Status-Pille (offene Anzahl) und 2–3 Zeilen Vorschau:
    - Einkaufsliste (offene Posten)
@@ -188,6 +188,8 @@ APP_API_URL=http://app:3000
 ## Konventionen
 
 - **Sprache:** Deutsch im UI, Englisch im Code (Variablen, Funktionen, Kommentare)
+- **Geteilte Domänen-Typen** liegen in `packages/shared` (`@dahamm/shared`), damit App, API-Endpunkte und Bot dieselbe Definition nutzen. Erster Typ: `ShoppingItem` – Einkaufslisten-Posten **ohne** Menge, nur `id`, `name`, `done`, `createdAt`. DB-Schema und API leiten davon ab.
+  - **Domänen-Constraints als geteilte Konstanten** dort, nicht je Schicht dupliziert: `SHOPPING_ITEM_NAME_LENGTH = { min: 3, max: 32 }` ist die einzige Quelle für Web-UI (`maxlength`/Button-Freigabe), `/api/shopping`-Validierung und Bot. Die API-Spec verweist darauf, statt die Zahl zu wiederholen. Eine echte Schema-Validierung (Zod o. Ä.) kommt erst mit dem API-Endpoint – `shared` bleibt bis dahin dependency-frei.
 - **Fehlerbehandlung:** Immer try/catch in Bot-Handlern, Nutzer bekommt lesbare Fehlermeldung
 - **Claude Haiku** für Intent-Parsing (günstig, schnell) – kein Sonnet für diese Aufgabe
 - **Kein Nx, kein Turborepo** – plain npm Workspaces reichen
