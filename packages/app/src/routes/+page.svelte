@@ -20,6 +20,6 @@
 	</div>
 
 	<div class="mt-6">
-		<ShoppingCard />
+		<ShoppingCard items={data.shoppingItems} />
 	</div>
 </main>

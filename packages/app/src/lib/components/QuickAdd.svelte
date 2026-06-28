@@ -1,15 +1,18 @@
 <script lang="ts">
-	// Globales Schnell-Hinzufügen auf dem Dashboard – Web-Pendant zum Bot.
-	// Ein Eingabefeld plus „+"-Button, der ein Dropdown mit dem Ziel öffnet
-	// (Einkaufsliste, später Todos/Essensplaner). Die eigentliche Submit-Logik
-	// folgt in einem späteren Schritt – aktuell nur die UI.
-
+	import { enhance } from '$app/forms';
 	import { SHOPPING_ITEM_NAME_LENGTH } from '@dahamm/shared';
 
-	type Target = { id: string; label: string };
+	// Globales Schnell-Hinzufügen auf dem Dashboard – Web-Pendant zum Bot.
+	// Ein Eingabefeld plus „+"-Button, der ein Dropdown mit dem Ziel öffnet
+	// (Einkaufsliste, später Todos/Essensplaner). Aktuell legt es echte
+	// Einkaufslisten-Posten über die `addShoppingItem`-Action an.
+
+	type Target = { id: string; label: string; action: string };
 
 	// Verfügbare Ziele. Aktuell nur die Einkaufsliste; weitere Module folgen.
-	const targets: Target[] = [{ id: 'shopping', label: 'Einkaufsliste' }];
+	const targets: Target[] = [
+		{ id: 'shopping', label: 'Einkaufsliste', action: '?/addShoppingItem' }
+	];
 
 	// Eingabe-Constraints aus der geteilten Domänen-Definition: mind. 3 Zeichen
 	// (getrimmt), damit der „+"-Button aktiv wird; max. 32 Zeichen (auch hart per
@@ -20,20 +23,33 @@
 	let value = $state('');
 
 	const canAdd = $derived(value.trim().length >= MIN_LENGTH);
-
-	function selectTarget(_target: Target) {
-		// Submit-Logik folgt – hier wird der Eintrag später ans Modul übergeben.
-		open = false;
-	}
 </script>
 
-<div class="flex gap-2">
+<form
+	method="POST"
+	action={targets[0].action}
+	class="flex gap-2"
+	use:enhance={() => {
+		// Dropdown sofort schließen (optimistisch); das Feld erst leeren, wenn der
+		// Posten wirklich angelegt wurde, damit der Text bei einem Fehler erhalten
+		// bleibt.
+		open = false;
+		return async ({ result, update }) => {
+			if (result.type === 'success') value = '';
+			// reset:false – wir leeren das Feld selbst; update() lädt die Daten neu,
+			// damit die Karte den frischen Posten zeigt.
+			await update({ reset: false });
+		};
+	}}
+>
 	<label for="quick-add" class="sr-only">Schnell hinzufügen</label>
 	<input
 		id="quick-add"
 		type="text"
-		name="quick-add"
+		name="name"
 		autocomplete="off"
+		required
+		minlength={MIN_LENGTH}
 		maxlength={MAX_LENGTH}
 		bind:value
 		placeholder="Schnell hinzufügen…"
@@ -79,9 +95,9 @@
 				<p class="px-4 py-1.5 text-xs font-medium tracking-wide text-slate-400">Hinzufügen zu</p>
 				{#each targets as target (target.id)}
 					<button
-						type="button"
+						type="submit"
 						role="menuitem"
-						onclick={() => selectTarget(target)}
+						formaction={target.action}
 						class="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
 					>
 						{target.label}
@@ -90,4 +106,4 @@
 			</div>
 		{/if}
 	</div>
-</div>
+</form>

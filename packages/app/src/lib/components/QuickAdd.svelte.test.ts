@@ -1,7 +1,21 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import QuickAdd from './QuickAdd.svelte';
+
+// The target menuitem is a real submit button. Stub `enhance` so submitting runs
+// the component's submit logic (which closes the dropdown) without a network
+// call against a server that doesn't exist in a unit test.
+vi.mock('$app/forms', () => ({
+	enhance: (form: HTMLFormElement, submit: (input: { cancel: () => void }) => unknown) => {
+		const handler = (event: Event) => {
+			event.preventDefault();
+			submit({ cancel: () => {} });
+		};
+		form.addEventListener('submit', handler);
+		return { destroy: () => form.removeEventListener('submit', handler) };
+	}
+}));
 
 describe('QuickAdd', () => {
 	test('renders the quick-add input', async () => {
@@ -44,6 +58,18 @@ describe('QuickAdd', () => {
 		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
 		await page.getByRole('button', { name: 'Ziel wählen' }).click();
 		await expect.element(page.getByRole('menuitem', { name: 'Einkaufsliste' })).toBeVisible();
+	});
+
+	test('submits new items to the addShoppingItem action', async () => {
+		const { container } = render(QuickAdd);
+		const form = container.querySelector('form');
+		expect(form?.getAttribute('action')).toBe('?/addShoppingItem');
+
+		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
+		await page.getByRole('button', { name: 'Ziel wählen' }).click();
+		await expect
+			.element(page.getByRole('menuitem', { name: 'Einkaufsliste' }))
+			.toHaveAttribute('formaction', '?/addShoppingItem');
 	});
 
 	test('closes the dropdown after picking a target', async () => {
