@@ -12,7 +12,10 @@ export default defineConfig(
 	ts.configs.recommended,
 	prettier,
 	{
-		languageOptions: { globals: { ...globals.node } },
+		languageOptions: {
+			globals: { ...globals.node },
+			parserOptions: { tsconfigRootDir: import.meta.dirname }
+		},
 		rules: {
 			// typescript-eslint empfehlen, no-undef in TS-Projekten zu deaktivieren.
 			'no-undef': 'off',
