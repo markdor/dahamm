@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { SHOPPING_ITEM_NAME_LENGTH, type ShoppingItem } from '@dahamm/shared';
@@ -27,13 +27,14 @@ function toDomain(row: ShoppingItemRow): ShoppingItem {
 	return { id: row.id, name: row.name, done: row.done, createdAt: row.createdAt.toISOString() };
 }
 
-/** All still-open items, oldest first (insertion order). */
+/** All still-open items, newest first (createdAt descending) – matches the
+ *  dashboard card and the documented API contract. */
 export function listOpenShoppingItems(db: Db): ShoppingItem[] {
 	return db
 		.select()
 		.from(shoppingItem)
 		.where(eq(shoppingItem.done, false))
-		.orderBy(asc(shoppingItem.createdAt))
+		.orderBy(desc(shoppingItem.createdAt))
 		.all()
 		.map(toDomain);
 }

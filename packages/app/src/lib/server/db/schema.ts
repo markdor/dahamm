@@ -91,7 +91,10 @@ export const shoppingItem = sqliteTable('shopping_item', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	done: integer('done', { mode: 'boolean' }).notNull().default(false),
-	createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	// Millisecond precision so „newest first" stays deterministic even when
+	// several items are added within the same second (e.g. a bot batch from one
+	// message). SQL column stays `integer` – this only changes Date ↔ int scaling.
+	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
 });
 
 export type User = typeof user.$inferSelect;

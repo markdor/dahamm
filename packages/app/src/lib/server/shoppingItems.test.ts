@@ -75,7 +75,7 @@ describe('createShoppingItem', () => {
 });
 
 describe('listOpenShoppingItems', () => {
-	it('returns only open items, oldest first', async () => {
+	it('returns only open items, newest first', async () => {
 		createShoppingItem(db, 'Erstes');
 		await new Promise((r) => setTimeout(r, 5));
 		createShoppingItem(db, 'Zweites');
@@ -84,7 +84,7 @@ describe('listOpenShoppingItems', () => {
 		completeShoppingItem(db, second.id);
 
 		const open = listOpenShoppingItems(db);
-		expect(open.map((i) => i.name)).toEqual(['Erstes', 'Zweites']);
+		expect(open.map((i) => i.name)).toEqual(['Zweites', 'Erstes']);
 	});
 
 	it('returns an empty list when nothing is open', () => {
