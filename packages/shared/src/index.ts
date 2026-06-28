@@ -1,14 +1,4 @@
 /**
- * Ein einzelner Posten der Einkaufsliste.
- *
- * Geteilter Domänen-Typ: genutzt von der App (Dashboard-Karte, Detailseite,
- * `/api/shopping`, Drizzle-Schema) und später vom Telegram-Bot, damit alle
- * Seiten dieselbe Definition teilen.
- *
- * Bewusst **ohne** Menge – die Familie hakt Posten nur ab; eine Stückzahl wird
- * bei Bedarf einfach in den Namen geschrieben ("2x Milch").
- */
-/**
  * Längengrenzen für den Namen eines Einkaufslisten-Postens.
  *
  * Geteilte Domänen-Invariante (keine reine API-Detailfrage): genutzt von der
@@ -21,6 +11,16 @@ export const SHOPPING_ITEM_NAME_LENGTH = {
 	max: 64
 } as const;
 
+/**
+ * Ein einzelner Posten der Einkaufsliste.
+ *
+ * Geteilter Domänen-Typ: genutzt von der App (Dashboard-Karte, Detailseite,
+ * `/api/shopping`, Drizzle-Schema) und später vom Telegram-Bot, damit alle
+ * Seiten dieselbe Definition teilen.
+ *
+ * Bewusst **ohne** Menge – die Familie hakt Posten nur ab; eine Stückzahl wird
+ * bei Bedarf einfach in den Namen geschrieben ("2x Milch").
+ */
 export interface ShoppingItem {
 	id: string;
 	/** Anzeigename des Postens (entspricht dem API-Feld `item`). Länge: siehe {@link SHOPPING_ITEM_NAME_LENGTH}. */
