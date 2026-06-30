@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+// The e2e project's default storageState is the logged-in admin (see
+// playwright.config.ts) — this test verifies the anonymous path, so it must
+// start from a clean, unauthenticated session.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 // DB-free smoke test that runs both locally and against the deployed container
 // (docker:test). Verifies the closed-app guard: an anonymous request is
 // redirected to /login and the magic-link form renders.

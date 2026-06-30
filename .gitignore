@@ -148,3 +148,7 @@ e2e.db
 e2e.db-shm
 e2e.db-wal
 e2e.db-journal
+
+# Playwright saved auth state (storageState) + docker e2e bind-mount artifacts
+**/playwright/.auth/
+.e2e-docker/

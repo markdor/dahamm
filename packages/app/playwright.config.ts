@@ -19,5 +19,13 @@ export default defineConfig({
 			ADMIN_USERNAME: 'admin'
 		}
 	},
-	testMatch: '**/*.e2e.{ts,js}'
+	projects: [
+		{ name: 'setup', testMatch: /auth\.setup\.ts/ },
+		{
+			name: 'e2e',
+			testMatch: '**/*.e2e.{ts,js}',
+			dependencies: ['setup'],
+			use: { storageState: 'playwright/.auth/admin.json' }
+		}
+	]
 });
