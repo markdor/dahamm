@@ -4,9 +4,7 @@ export type GuardContext = {
 };
 
 export type GuardDecision =
-	| { action: 'resolve' }
-	| { action: 'redirect'; location: string }
-	| { action: 'unauthorized' };
+	{ action: 'resolve' } | { action: 'redirect'; location: string } | { action: 'unauthorized' };
 
 /**
  * Exact segment-prefix match: matches the path itself or any sub-path, but not
