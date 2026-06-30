@@ -6,8 +6,8 @@
 	import type { ShoppingItem } from '@dahamm/shared';
 
 	// removeDelayMs ist als Prop herausgezogen, damit Tests die Gnadenfrist
-	// verkürzen können – in der App bleibt es bei 3 Sekunden.
-	let { items, removeDelayMs = 3000 }: { items: ShoppingItem[]; removeDelayMs?: number } = $props();
+	// verkürzen können – in der App bleibt es bei 2 Sekunden.
+	let { items, removeDelayMs = 2000 }: { items: ShoppingItem[]; removeDelayMs?: number } = $props();
 
 	// Wie viele offene Posten die Karte als Vorschau zeigt (Rest als „+ N weitere").
 	const PREVIEW_LIMIT = 4;
