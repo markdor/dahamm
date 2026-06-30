@@ -11,7 +11,7 @@ import { db } from './db';
 import { user as userTable } from './db/schema';
 import { logger } from './logger';
 import { sendMagicLinkMail } from './mailer';
-import { consumeEmailRateLimit } from './magicLinkThrottle';
+import { consumeEmailRateLimit, MAGIC_LINK_EMAIL_LIMIT } from './magicLinkThrottle';
 
 const baseURL = env.BASE_URL ?? 'http://localhost:5173';
 
@@ -36,6 +36,20 @@ if (magicLinkDebugPath && !dev) {
 			'This is a test-only affordance and must never be enabled in production.'
 	);
 }
+
+// E2E test harnesses re-request a magic link on every run (Playwright UI mode
+// alone does this dozens of times per debugging session) against the same
+// shared "no-trusted-ip" bucket – a local vite-preview/docker run never has a
+// real client IP for Better Auth to key the limiter on. Raise both limiters
+// far above anything reachable in production traffic instead of disabling
+// them, so the real rate-limit code path still runs. Gated on the same
+// MAGIC_LINK_DEBUG_PATH seam as the file capture above.
+const magicLinkRateLimit = magicLinkDebugPath
+	? { window: 15 * 60, max: 1000 }
+	: { window: 15 * 60, max: 5 };
+const emailRateLimit = magicLinkDebugPath
+	? { ...MAGIC_LINK_EMAIL_LIMIT, max: 1000 }
+	: MAGIC_LINK_EMAIL_LIMIT;
 
 export const auth = betterAuth({
 	// Mounted at /auth so the /api/* namespace stays free for the bot endpoints.
@@ -70,7 +84,7 @@ export const auth = betterAuth({
 		window: 10,
 		max: 10, // default for all auth routes: 10 req / 10 s
 		customRules: {
-			'/sign-in/magic-link': { window: 15 * 60, max: 5 } // 5 req / 15 min per IP
+			'/sign-in/magic-link': magicLinkRateLimit // 5 req / 15 min per IP in prod
 		}
 	},
 	plugins: [
@@ -92,7 +106,7 @@ export const auth = betterAuth({
 				// every request, before the whitelist branch, so hit and miss share the
 				// same code path and an over-quota request behaves exactly like a miss
 				// (no mail, identical response) – no enumeration oracle.
-				const allowed = consumeEmailRateLimit(db, email);
+				const allowed = consumeEmailRateLimit(db, email, emailRateLimit);
 
 				// Whitelist enforcement: Better Auth would otherwise send a link to any
 				// address. Only registered users (a row in `user`) get a mail. The

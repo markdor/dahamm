@@ -1,36 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { existsSync, readFileSync } from 'node:fs';
+import { E2E_ADMIN_EMAIL, countMagicLinkLines, waitForNewMagicLink } from './magic-link';
 
-// Must match playwright.config.ts (ADMIN_EMAIL + MAGIC_LINK_DEBUG_PATH).
-const ADMIN_EMAIL = 'admin@e2e.test';
-const MAGIC_LINK_FILE = './e2e-magic-link.log';
-
-// Tokens are stored hashed, so the plaintext is no longer recoverable from the
-// DB. Instead the production build appends the full magic-link URL to a capture
-// file when MAGIC_LINK_DEBUG_PATH is set (only the local Playwright config sets
-// it). Against a deployed container (E2E_TARGET=docker) that file lives on the
-// container and is unreachable, so we skip the flow there instead of failing.
-const isContainerRun = process.env.E2E_TARGET === 'docker';
-
-/**
- * The server appends one magic-link URL per request to the capture file. The
- * test only ever requests one link, so the last non-empty line is ours.
- */
-function readLatestMagicLink(): string | null {
-	if (!existsSync(MAGIC_LINK_FILE)) return null;
-	const lines = readFileSync(MAGIC_LINK_FILE, 'utf8')
-		.split('\n')
-		.map((l) => l.trim())
-		.filter(Boolean);
-	return lines.at(-1) ?? null;
-}
+// The e2e project's default storageState is the logged-in admin (see
+// playwright.config.ts) — this test verifies the login flow itself, so it
+// must start from a clean, unauthenticated session.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Magic-Link-Login', () => {
-	test.skip(
-		isContainerRun,
-		'kein Host-Zugriff auf die Magic-Link-Capture-Datei — Lauf gegen Container'
-	);
-
 	test('Admin meldet sich per Magic Link an und sieht die Begrüßungsseite', async ({
 		page,
 		baseURL
@@ -42,22 +18,16 @@ test.describe('Magic-Link-Login', () => {
 		await expect(page).toHaveURL(/\/login$/);
 
 		// Mailadresse eingeben und Link anfordern.
-		await page.getByLabel('E-Mail').fill(ADMIN_EMAIL);
+		await page.getByLabel('E-Mail').fill(E2E_ADMIN_EMAIL);
+		const linesBefore = countMagicLinkLines();
 		await page.getByRole('button', { name: 'Link anfordern' }).click();
 
 		// Immer dieselbe (neutrale) Bestätigung – egal ob Whitelist-Hit oder -Miss.
 		await expect(page.getByRole('status')).toContainText(/wurde ein Link verschickt/i);
 
-		// Die Magic-Link-URL wird beim Request in die Capture-Datei geschrieben; kurz pollen.
-		let magicLink: string | null = null;
-		for (let i = 0; i < 30 && !magicLink; i++) {
-			magicLink = readLatestMagicLink();
-			if (!magicLink) await new Promise((r) => setTimeout(r, 100));
-		}
-		expect(magicLink, 'Magic-Link-URL sollte in der Capture-Datei landen').toBeTruthy();
-
 		// Link aufrufen -> Session-Cookie gesetzt, Redirect aufs Dashboard.
-		await page.goto(magicLink!);
+		const magicLink = await waitForNewMagicLink(linesBefore);
+		await page.goto(magicLink);
 		await expect(page).toHaveURL(new URL('/', baseURL!).toString());
 
 		// Begrüßungsseite prüft Username im Header und in der Überschrift.
