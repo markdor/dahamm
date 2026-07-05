@@ -7,6 +7,24 @@
       "Bash(npx playwright *)",
       "Bash(gh run *)",
       "Bash(gh api *)"
+    ],
+    "ask": [
+      "Bash(gh api * -X POST*)",
+      "Bash(gh api * -X PUT*)",
+      "Bash(gh api * -X PATCH*)",
+      "Bash(gh api * -X DELETE*)",
+      "Bash(gh api * -X post*)",
+      "Bash(gh api * -X put*)",
+      "Bash(gh api * -X patch*)",
+      "Bash(gh api * -X delete*)",
+      "Bash(gh api * --method POST*)",
+      "Bash(gh api * --method PUT*)",
+      "Bash(gh api * --method PATCH*)",
+      "Bash(gh api * --method DELETE*)",
+      "Bash(gh api * --method post*)",
+      "Bash(gh api * --method put*)",
+      "Bash(gh api * --method patch*)",
+      "Bash(gh api * --method delete*)"
     ]
   }
 }

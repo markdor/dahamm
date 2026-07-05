@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { QUICK_ADD_TARGETS, SHOPPING_ITEM_NAME_LENGTH } from '@dahamm/shared';
 
-	// Globales Schnell-Hinzufügen auf dem Dashboard – Web-Pendant zum Bot.
+	// Globales Schnell-Hinzufügen auf dem Dashboard.
 	// Ein Icon vor dem Eingabefeld zeigt das aktuell gewählte Ziel und öffnet
 	// per Klick ein Dropdown zur Zieländerung (ändert nur den State, postet
 	// nichts). Der „+"-Button (und Enter) postet direkt an das aktuell
@@ -15,7 +15,7 @@
 
 	let open = $state(false);
 	let value = $state('');
-	// Immer Default beim Mount, keine Persistenz (z. B. via localStorage).
+	// Always defaults on mount, no persistence (e.g. via localStorage).
 	let selectedTargetId = $state(QUICK_ADD_TARGETS[0].id);
 
 	const selectedTarget = $derived(
