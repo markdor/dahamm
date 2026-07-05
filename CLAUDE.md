@@ -1,7 +1,6 @@
 # Dahamm – CLAUDE.md
 
-Selbst gehostete Familien-App mit Dashboard, Einkaufsliste, Essensplaner und Todos –
-steuerbar per Telegram-Bot mit Spracheingabe via Whisper und Claude AI.
+Selbst gehostete Familien-App mit Dashboard, Einkaufsliste, Essensplaner und Todos.
 
 ---
 
@@ -52,7 +51,7 @@ Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
 
 1. **Header** – App-Name links, Username-Dropdown rechts (Logout, ggf. Admin)
 2. **Begrüßung** + Datum
-3. **Quick-Add** – ein Eingabefeld zum schnellen Hinzufügen (Web-Pendant zum Bot); der „+"-Button öffnet ein Dropdown zur Auswahl des Ziels (Einkaufsliste, später Todos/Essensplaner)
+3. **Quick-Add** – ein Eingabefeld zum schnellen Hinzufügen; ein Icon-Button links zeigt/wechselt das Ziel (Einkaufsliste, später Todos/Essensplaner), der „+"-Button rechts fügt den Eintrag direkt zum aktuell gewählten Ziel hinzu
 4. **Modul-Karten** (je eine pro Modul, antippbar → Detailseite), jeweils mit Icon, Titel,
    Status-Pille (offene Anzahl) und 2–3 Zeilen Vorschau:
    - Einkaufsliste (offene Posten)
