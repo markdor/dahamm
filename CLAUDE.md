@@ -332,6 +332,16 @@ verifizieren, ob die Konvention noch aktuell ist.
 
 ---
 
+## CLAUDE.md Pflege
+
+Nach jeder abgeschlossenen Feature-Implementierung:
+
+1. Feature aus „Noch nicht implementiert" streichen.
+2. Falls das Feature nicht-triviale Entscheidungen enthält (Auth-Sonderfälle, bewusste Scope-Abgrenzungen, unerwartete Constraints), als kurze Sektion in CLAUDE.md ergänzen – nur was **nicht** aus dem Code oder Git-History ableitbar ist.
+3. Veraltete oder falsche Aussagen in bestehenden Sektionen korrigieren.
+
+---
+
 ## Noch nicht implementiert (Reihenfolge empfohlen)
 
 1. SvelteKit App Grundstruktur + Drizzle Schema
