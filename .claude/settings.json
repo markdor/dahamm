@@ -2,13 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(gh issue *)",
-      "Bash(gh issue create --title Todos-Modul --body 'Todos-Modul analog zur Einkaufsliste: Schema, CRUD, Dashboard-Karte \\(mit „heute\"-Markierung bei Tagesfrist\\), Detailseite. *)",
-      "Bash(gh issue create --title Essensplaner-Modul --body 'Essensplaner-Modul: Wochenplan, Dashboard-Karte \\(heutiges Gericht + Wochenstreifen\\). *)",
-      "Bash(gh issue create --title 'Einkaufsliste ↔ Essensplaner Integration' --body 'Zutaten aus dem Essensplaner sollen automatisch in die Einkaufsliste übernommen werden können. Setzt das Essensplaner-Modul voraus \\(#11\\). *)",
-      "Bash(gh issue create --title Notizen-Modul --body 'Notizen-Modul: Dashboard-Karte mit letzten Einträgen, Detailseite. *)",
-      "Bash(gh issue create --title 'Bot-API-Endpunkte \\(/api/shopping, /api/todos, /api/meals\\)' --body 'API-Endpunkte für den Telegram-Bot: *)",
-      "Bash(gh issue create --title 'Telegram-Bot-Service \\(packages/bot\\)' --body 'Neues Package `packages/bot` \\(grammy, TypeScript\\): *)",
-      "Bash(gh issue create --title 'Whisper-STT-Service \\(packages/whisper\\)' --body 'Neues Package `packages/whisper` \\(FastAPI, Python\\): *)"
+      "Bash(npm run *)",
+      "Bash(npx prettier *)",
+      "Bash(npx playwright *)"
     ]
   }
 }
