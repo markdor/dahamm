@@ -30,3 +30,22 @@ export interface ShoppingItem {
 	/** Erstellzeitpunkt als ISO-String, für stabile Sortierung der Vorschau. */
 	createdAt: string;
 }
+
+/** Ein Ziel, an das der Dashboard-Quick-Add einen Eintrag posten kann. */
+export interface QuickAddTarget {
+	id: string;
+	label: string;
+	/** SvelteKit-Form-Action, an die das Quick-Add-Formular postet. */
+	action: string;
+}
+
+/**
+ * Verfügbare Quick-Add-Ziele.
+ *
+ * Geteilte Liste statt lokal in `QuickAdd.svelte`, damit spätere Module
+ * (Todos, Essensplaner) hier ergänzt werden und Web-UI wie Bot dieselbe
+ * Quelle nutzen. Aktuell nur die Einkaufsliste.
+ */
+export const QUICK_ADD_TARGETS: QuickAddTarget[] = [
+	{ id: 'shopping', label: 'Einkaufsliste', action: '?/addShoppingItem' }
+];
