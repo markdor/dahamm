@@ -8,8 +8,7 @@ const ITEM_OPEN = `Brot ${suffix}`;
 
 async function addViaQuickAdd(page: Page, name: string) {
 	await page.getByLabel('Schnell hinzufügen').fill(name);
-	await page.getByRole('button', { name: 'Ziel wählen' }).click();
-	await page.getByRole('menuitem', { name: 'Einkaufsliste' }).click();
+	await page.getByRole('button', { name: 'Hinzufügen' }).click();
 }
 
 test.describe('Einkaufsliste – QuickAdd', () => {
