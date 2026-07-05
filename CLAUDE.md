@@ -10,12 +10,10 @@ steuerbar per Telegram-Bot mit Spracheingabe via Whisper und Claude AI.
 ```
 packages/
 ├── app/        # SvelteKit PWA + API-Endpunkte + Auth
-├── bot/        # Telegram Bot (TypeScript, grammy)
-├── whisper/    # Speech-to-Text REST-Service (Python, FastAPI)
 └── shared/     # Geteilte TypeScript-Types
 ```
 
-3 Docker Container, orchestriert via Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
+Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
 
 ---
 
@@ -25,9 +23,6 @@ packages/
 |---|---|
 | Frontend + API | SvelteKit (PWA-fähig) |
 | Datenbank | SQLite via Drizzle ORM |
-| Bot | grammy (TypeScript) |
-| Speech-to-Text | OpenAI Whisper (small-Modell, lokal) |
-| Intent-Parsing | Claude Haiku (claude-haiku-4-5-20251001) |
 | Auth | Magic Link via nodemailer (Hetzner SMTP) |
 | Deployment | Docker Compose + Traefik v3 (Hetzner VPS) |
 | Monorepo | npm Workspaces (kein Nx, kein Turborepo) |
@@ -37,27 +32,10 @@ packages/
 ## Services (Docker Compose)
 
 ### `app` – SvelteKit
-- Dashboard mit den Modulen: Einkaufsliste, Todos, Essensplaner, Notizen
-- API-Endpunkte für den Bot:
-  - `POST /api/shopping` – `{ items: [{ item }] }`
-  - `POST /api/todos`    – `{ todos: [{ title, dueDate? }] }`
-  - `POST /api/meals`    – `{ meals: [{ day, meal }] }`
+- Dashboard mit dem Modul: Einkaufsliste
 - Auth: Magic Link per Mail (nodemailer + Hetzner SMTP)
 - Session-Dauer: 30 Tage Cookie
 - SQLite-Datei liegt in einem Named Docker Volume unter `/app/data/dahamm.db`
-
-### `bot` – Telegram Bot
-- Bibliothek: grammy
-- Sprachnachrichten: Telegram .ogg → Whisper → Transkript → Claude Haiku → App API
-- Textnachrichten: direkt → Claude Haiku → App API
-- Sicherheit: Whitelist via `ALLOWED_USER_IDS` (kommagetrennte Telegram-IDs)
-- Claude Haiku parst natürliche Sprache zu strukturiertem JSON (shoppingItems / todos / mealPlan)
-
-### `whisper` – STT-Service
-- FastAPI (Python)
-- Modell: `small` (lädt beim Docker Build, nicht beim Start)
-- Endpunkt: `POST /transcribe` – nimmt Audiodatei, gibt `{ text, language }` zurück
-- Sprache fixiert auf `de` für bessere Performance
 
 ---
 
@@ -78,10 +56,6 @@ packages/
 4. **Modul-Karten** (je eine pro Modul, antippbar → Detailseite), jeweils mit Icon, Titel,
    Status-Pille (offene Anzahl) und 2–3 Zeilen Vorschau:
    - Einkaufsliste (offene Posten)
-   - Todos (mit „heute"-Markierung bei Tagesfrist)
-   - Essensplaner (heutiges Gericht + Wochenstreifen)
-   - Notizen (letzte Einträge)
-5. **Hinweis-Leiste** – Einträge auch per Telegram & Sprachnachricht möglich
 
 Referenz-Mockup (heller Modus, Eukalyptus): ![Dahamm Dashboard Mockup](docs/ui/dashboard-mockup.png)
 
@@ -154,12 +128,6 @@ Referenz-Mockup (heller Modus, Eukalyptus): ![Dahamm Dashboard Mockup](docs/ui/d
 ## Environment Variables
 
 ```env
-# Telegram
-TELEGRAM_BOT_TOKEN=
-
-# Anthropic
-ANTHROPIC_API_KEY=
-
 # SMTP (Hetzner Mail) – in Dev nicht nötig, Magic Link wird dann in der Konsole geloggt
 SMTP_HOST=mail.your-server.de
 SMTP_PORT=465
@@ -177,10 +145,6 @@ BASE_URL=https://dahamm.markdor.net   # öffentliche Basis-URL der App, dient so
 AUTH_SECRET=        # zufälliger langer String (z. B. `openssl rand -hex 32`)
 ADMIN_EMAIL=               # E-Mail des initialen Admin-Users (Bootstrap)
 ADMIN_USERNAME=            # Username des initialen Admin-Users (nur beim ersten Anlegen verwendet)
-
-# Interne Service-URLs (Docker-intern, nicht ändern)
-WHISPER_URL=http://whisper:8000
-APP_API_URL=http://app:3000
 ```
 
 ---
@@ -236,14 +200,6 @@ Netzwerk und Traefik). Konkret:
 - **Healthchecks** für Services, von denen andere abhängen (z. B. `whisper`,
   damit `bot` erst startet, wenn STT bereit ist).
 - `bot` und `whisper` hängen **nur** im `dahamm-internal`-Netzwerk, nicht in `web`.
-
----
-
-## UI Design
-
-- Klar und minimalistisch, kein visuelles Rauschen
-- **Mobile-first** – primäres Endgerät ist das Smartphone, Touch-Targets großzügig
-- Desktop-Layout darf vorhanden sein, hat aber niedrigere Priorität
 
 ---
 
@@ -336,18 +292,7 @@ verifizieren, ob die Konvention noch aktuell ist.
 
 Nach jeder abgeschlossenen Feature-Implementierung:
 
-1. Feature aus „Noch nicht implementiert" streichen.
-2. Falls das Feature nicht-triviale Entscheidungen enthält (Auth-Sonderfälle, bewusste Scope-Abgrenzungen, unerwartete Constraints), als kurze Sektion in CLAUDE.md ergänzen – nur was **nicht** aus dem Code oder Git-History ableitbar ist.
-3. Veraltete oder falsche Aussagen in bestehenden Sektionen korrigieren.
+1. Falls das Feature nicht-triviale Entscheidungen enthält (Auth-Sonderfälle, bewusste Scope-Abgrenzungen, unerwartete Constraints), als kurze Sektion in CLAUDE.md ergänzen – nur was **nicht** aus dem Code oder Git-History ableitbar ist.
+2. Veraltete oder falsche Aussagen in bestehenden Sektionen korrigieren.
 
----
-
-## Noch nicht implementiert (Reihenfolge empfohlen)
-
-1. SvelteKit App Grundstruktur + Drizzle Schema
-2. Magic Link Auth
-3. Einkaufsliste (einfachstes Modul, sofortiger Familiennutzen)
-4. Todos
-5. Essensplaner
-6. Einkaufsliste ↔ Essensplaner Integration (Zutaten automatisch übernehmen)
-7. Notizen
+Zukünftige Arbeit wird ausschließlich als GitHub Issue getrackt (Titel + Stub, Refinement via `/refine`) – CLAUDE.md dokumentiert nur den bestehenden Stand und Konventionen, keine Roadmap.
