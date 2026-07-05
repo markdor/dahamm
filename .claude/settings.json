@@ -5,7 +5,8 @@
       "Bash(npm run *)",
       "Bash(npx prettier *)",
       "Bash(npx playwright *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(gh api *)"
     ]
   }
 }
