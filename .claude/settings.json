@@ -6,7 +6,11 @@
       "Bash(npx prettier *)",
       "Bash(npx playwright *)",
       "Bash(gh run *)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(gh label *)",
+      "PowerShell(gh issue *)",
+      "Bash(npm install *)",
+      "Bash(npm view *)"
     ],
     "ask": [
       "Bash(gh api * -X POST*)",
