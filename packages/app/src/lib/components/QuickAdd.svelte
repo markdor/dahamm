@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { Plus, ShoppingCart } from '@lucide/svelte';
 	import { QUICK_ADD_TARGETS, SHOPPING_ITEM_NAME_LENGTH } from '@dahamm/shared';
 
 	// Globales Schnell-Hinzufügen auf dem Dashboard.
@@ -46,15 +47,7 @@
 			onclick={() => (open = !open)}
 			class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
 		>
-			<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<circle cx="9" cy="20" r="1.25" />
-				<circle cx="18" cy="20" r="1.25" />
-				<path
-					d="M2.5 3h2l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L21 7H6"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				/>
-			</svg>
+			<ShoppingCart size={20} strokeWidth={2} />
 		</button>
 
 		{#if open}
@@ -109,15 +102,6 @@
 		disabled={!canAdd}
 		class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-brand"
 	>
-		<svg
-			class="h-5 w-5"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
-		</svg>
+		<Plus size={20} strokeWidth={2} aria-hidden="true" />
 	</button>
 </form>

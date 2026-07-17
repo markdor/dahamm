@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { ChevronDown } from '@lucide/svelte';
 
 	type HeaderUser = { username: string; isAdmin: boolean };
 	let { user }: { user: HeaderUser } = $props();
@@ -20,18 +21,7 @@
 				class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
 			>
 				<span>{user.username}</span>
-				<svg
-					class="h-4 w-4 text-slate-400"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-					aria-hidden="true"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
-						clip-rule="evenodd"
-					/>
-				</svg>
+				<ChevronDown size={16} strokeWidth={2} class="text-slate-400" aria-hidden="true" />
 			</button>
 
 			{#if open}

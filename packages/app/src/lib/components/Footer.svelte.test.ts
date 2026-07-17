@@ -11,6 +11,21 @@ describe('Footer', () => {
 		await expect.element(page.getByText(`v${__APP_VERSION__}`)).toBeVisible();
 	});
 
+	test('links the version to the GitHub release notes', async () => {
+		render(Footer);
+
+		const link = page.getByRole('link', { name: `v${__APP_VERSION__}` });
+		await expect.element(link).toBeVisible();
+		await expect
+			.element(link)
+			.toHaveAttribute(
+				'href',
+				`https://github.com/markdor/dahamm/releases/tag/v${__APP_VERSION__}`
+			);
+		await expect.element(link).toHaveAttribute('target', '_blank');
+		await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer');
+	});
+
 	test('shows the "Made with" note', async () => {
 		render(Footer);
 

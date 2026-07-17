@@ -20,6 +20,7 @@ vi.mock('$lib/server/logger', () => ({
 
 import { db } from '$lib/server/db';
 import { user, session, botToken } from '$lib/server/db/schema';
+import { logger } from '$lib/server/logger';
 import { actions, load } from './+page.server';
 
 const ADMIN = { id: 'admin-id', username: 'admin', isAdmin: true };
@@ -142,6 +143,39 @@ describe('admin create', () => {
 		const result = await actions.create(makeEvent({ email: 'dupe@dahamm.de', username: 'other' }));
 		expect(result).toMatchObject({ status: 409, data: { fieldErrors: { email: 'taken' } } });
 	});
+
+	it('returns 409 on a duplicate username', async () => {
+		insertUser({ email: 'dupe-user@dahamm.de', username: 'dupeuser' });
+		const result = await actions.create(
+			makeEvent({ email: 'other@dahamm.de', username: 'dupeuser' })
+		);
+		expect(result).toMatchObject({ status: 409, data: { fieldErrors: { username: 'taken' } } });
+	});
+
+	it('returns 409 on a duplicate telegram id', async () => {
+		insertUser({ email: 'tg1@dahamm.de', username: 'tg1', telegramUserId: '555' });
+		const result = await actions.create(
+			makeEvent({ email: 'tg2@dahamm.de', username: 'tg2', telegramUserId: '555' })
+		);
+		expect(result).toMatchObject({
+			status: 409,
+			data: { fieldErrors: { telegramUserId: 'taken' } }
+		});
+	});
+
+	it('rethrows and logs an unexpected (non-UNIQUE) database error', async () => {
+		const err = new Error('disk full');
+		const insertSpy = vi.spyOn(db, 'insert').mockImplementationOnce(() => {
+			throw err;
+		});
+
+		await expect(actions.create(makeEvent({ email: 'x@dahamm.de', username: 'xx' }))).rejects.toBe(
+			err
+		);
+		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin create user failed');
+
+		insertSpy.mockRestore();
+	});
 });
 
 describe('admin update', () => {
@@ -190,6 +224,30 @@ describe('admin update', () => {
 		insertUser({ email: 'two@dahamm.de', username: 'two' });
 		const result = await actions.update(makeEvent({ id, email: 'two@dahamm.de', username: 'one' }));
 		expect(result).toMatchObject({ status: 409, data: { fieldErrors: { email: 'taken' } } });
+	});
+
+	it('rejects an invalid email with a validation error', async () => {
+		const id = insertUser({ email: 'v@dahamm.de', username: 'v' });
+		const result = await actions.update(makeEvent({ id, email: 'nope', username: 'v' }));
+		expect(result).toMatchObject({
+			status: 400,
+			data: { action: 'update', fieldErrors: { email: 'invalid' } }
+		});
+	});
+
+	it('rethrows and logs an unexpected (non-UNIQUE) database error', async () => {
+		const id = insertUser({ email: 'e@dahamm.de', username: 'e' });
+		const err = new Error('disk full');
+		const updateSpy = vi.spyOn(db, 'update').mockImplementationOnce(() => {
+			throw err;
+		});
+
+		await expect(
+			actions.update(makeEvent({ id, email: 'e2@dahamm.de', username: 'e2' }))
+		).rejects.toBe(err);
+		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin update user failed');
+
+		updateSpy.mockRestore();
 	});
 });
 

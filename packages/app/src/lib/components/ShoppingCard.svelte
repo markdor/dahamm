@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { Check, ShoppingCart } from '@lucide/svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ShoppingItem } from '@dahamm/shared';
@@ -73,15 +74,7 @@
 			class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
 			aria-hidden="true"
 		>
-			<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<circle cx="9" cy="20" r="1.25" />
-				<circle cx="18" cy="20" r="1.25" />
-				<path
-					d="M2.5 3h2l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L21 7H6"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				/>
-			</svg>
+			<ShoppingCart size={20} strokeWidth={2} />
 		</span>
 
 		<h2 class="flex-1 text-lg font-semibold tracking-tight text-slate-900">Einkaufsliste</h2>
@@ -114,15 +107,7 @@
 							aria-hidden="true"
 						>
 							{#if struck}
-								<svg
-									class="h-3.5 w-3.5"
-									viewBox="0 0 20 20"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="3"
-								>
-									<path d="M4 10l4 4 8-8" stroke-linecap="round" stroke-linejoin="round" />
-								</svg>
+								<Check size={14} strokeWidth={3} />
 							{/if}
 						</span>
 						<span

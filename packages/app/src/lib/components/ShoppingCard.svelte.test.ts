@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import type { ShoppingItem } from '@dahamm/shared';
@@ -10,13 +10,27 @@ const invalidateAll = vi.fn();
 // so we can observe the item being removed after the grace period without a
 // real server. invalidateAll is a no-op here (there is no data layer in a unit
 // test).
+//
+// When `holdCallbacks` is set, the persist callback is captured in
+// `heldCallbacks` instead of auto-resolving, so a test can inspect the
+// component while a submit is in flight and resolve it explicitly.
+let holdCallbacks = false;
+let heldCallbacks: Array<(opts: { result: { type: string } }) => unknown> = [];
+
 vi.mock('$app/navigation', () => ({ invalidateAll: () => invalidateAll() }));
 vi.mock('$app/forms', () => ({
-	enhance: (form: HTMLFormElement, submit: () => (opts: { result: unknown }) => unknown) => {
+	enhance: (
+		form: HTMLFormElement,
+		submit: () => (opts: { result: { type: string } }) => unknown
+	) => {
 		const handler = (event: Event) => {
 			event.preventDefault();
 			const callback = submit();
-			void Promise.resolve().then(() => callback({ result: { type: 'success' } }));
+			if (holdCallbacks) {
+				heldCallbacks.push(callback);
+			} else {
+				void Promise.resolve().then(() => callback({ result: { type: 'success' } }));
+			}
 		};
 		form.addEventListener('submit', handler);
 		return { destroy: () => form.removeEventListener('submit', handler) };
@@ -26,6 +40,11 @@ vi.mock('$app/forms', () => ({
 function item(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
 	return { id: name, name, done: false, createdAt: '2026-06-25T07:00:00.000Z', ...over };
 }
+
+beforeEach(() => {
+	holdCallbacks = false;
+	heldCallbacks = [];
+});
 
 describe('ShoppingCard', () => {
 	test('renders the module title', async () => {
@@ -92,5 +111,41 @@ describe('ShoppingCard', () => {
 		// After the short grace period the hidden form submits and the item leaves.
 		await expect.element(page.getByText('Milch')).not.toBeInTheDocument();
 		expect(invalidateAll).toHaveBeenCalled();
+	});
+
+	test('ignores a tap while the item is already being persisted', async () => {
+		holdCallbacks = true;
+		render(ShoppingCard, { items: [item('Milch')], removeDelayMs: 10 });
+
+		await page.getByRole('button', { name: 'Milch abhaken' }).click();
+		// Let the grace period elapse so the hidden form submits; the persist
+		// request is now in flight and held (not yet resolved).
+		await new Promise((r) => setTimeout(r, 40));
+		expect(heldCallbacks.length).toBe(1);
+
+		// A second tap while committing must be a no-op - no undo, no second submit.
+		await page.getByRole('button', { name: 'Milch doch nicht abhaken' }).click();
+		expect(heldCallbacks.length).toBe(1);
+		await expect.element(page.getByText('Milch')).toHaveClass(/line-through/);
+
+		heldCallbacks[0]({ result: { type: 'success' } });
+		await expect.element(page.getByText('Milch')).not.toBeInTheDocument();
+	});
+
+	test('keeps the item visible and re-clickable when the persist request fails', async () => {
+		invalidateAll.mockClear();
+		holdCallbacks = true;
+		render(ShoppingCard, { items: [item('Milch')], removeDelayMs: 10 });
+
+		await page.getByRole('button', { name: 'Milch abhaken' }).click();
+		await new Promise((r) => setTimeout(r, 40));
+		expect(heldCallbacks.length).toBe(1);
+
+		heldCallbacks[0]({ result: { type: 'failure' } });
+		await expect.element(page.getByText('Milch')).not.toHaveClass(/line-through/);
+		// Not persisted, so no client-side data refresh happened.
+		expect(invalidateAll).not.toHaveBeenCalled();
+		// The tap can be repeated, i.e. the button reverts to the "abhaken" state.
+		await expect.element(page.getByRole('button', { name: 'Milch abhaken' })).toBeVisible();
 	});
 });

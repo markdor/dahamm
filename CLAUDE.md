@@ -45,6 +45,18 @@ Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
 - Desktop-Layout darf vorhanden sein, hat aber niedrigere Priorität
 - Farbschema: gedeckte Eukalyptus-/Salbei-Palette (slate-Skala überschrieben, siehe `layout.css`), semantische Akzente nur für Status (Amber „heute", Brand-Grün für Hauptaktion)
 
+### Icons
+
+- **`@lucide/svelte`** (nicht das deprecated `lucide-svelte`) für alle Icons, keine handgeschriebenen Inline-`<svg>`s mehr. Farbe läuft weiterhin ausschließlich über `currentColor` + bestehende Tailwind-Textfarbklassen, keine hartkodierten Farben.
+- Feste Größen-/Stroke-Konvention statt Ad-hoc-Werten pro Vorkommen:
+
+  | Verwendung | Beispiele | `size` | `strokeWidth` |
+  |---|---|---|---|
+  | Primäre Buttons | `ShoppingCart`, `Plus` | `20` | `2` |
+  | Sekundär (Dropdown-Indikator) | `ChevronDown` | `16` | `2` |
+  | Inline-Status (klein, kräftig) | `Check` | `14` | `3` |
+- Keine eigene Icon-Wrapper-Komponente – bei der aktuell überschaubaren Anzahl an Vorkommen reicht die direkte `size`/`strokeWidth`-Prop-Vergabe an der jeweiligen Nutzungsstelle; eine Abstraktion erst einführen, falls sich das Muster wiederholt.
+
 ### Dashboard (Startseite `/`)
 
 Überblicks-Seite, keine Arbeitsfläche. Aufbau von oben nach unten:

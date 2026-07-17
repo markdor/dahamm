@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import Database from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
@@ -58,6 +59,15 @@ describe('verifyBotToken', () => {
 	});
 
 	it('rejects everything when no token is set', () => {
+		expect(verifyBotToken(db, 'a'.repeat(64))).toBe(false);
+	});
+
+	it('rejects when the stored hash has an unexpected length', () => {
+		// Defensive guard: a stored hash that isn't a 32-byte SHA-256 digest
+		// must never reach timingSafeEqual (it throws on length mismatch).
+		db.insert(schema.botToken)
+			.values({ id: randomUUID(), tokenHash: 'ab', createdAt: new Date(), lastUsedAt: null })
+			.run();
 		expect(verifyBotToken(db, 'a'.repeat(64))).toBe(false);
 	});
 
