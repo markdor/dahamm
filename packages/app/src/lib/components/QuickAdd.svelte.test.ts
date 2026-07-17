@@ -5,15 +5,23 @@ import QuickAdd from './QuickAdd.svelte';
 
 // Stub `enhance` so submitting the form runs the component's submit logic
 // without a network call against a server that doesn't exist in a unit test,
-// while letting tests observe how often a real submit happened.
+// while letting tests observe how often a real submit happened and control
+// the after-submit callback (result.type) explicitly.
 let submitCount = 0;
+let lastCallback:
+	((opts: { result: { type: string }; update: () => Promise<void> }) => unknown) | null = null;
 
 vi.mock('$app/forms', () => ({
-	enhance: (form: HTMLFormElement, submit: (input: { cancel: () => void }) => unknown) => {
+	enhance: (
+		form: HTMLFormElement,
+		submit: (input: {
+			cancel: () => void;
+		}) => (opts: { result: { type: string }; update: () => Promise<void> }) => unknown
+	) => {
 		const handler = (event: Event) => {
 			event.preventDefault();
 			submitCount++;
-			submit({ cancel: () => {} });
+			lastCallback = submit({ cancel: () => {} });
 		};
 		form.addEventListener('submit', handler);
 		return { destroy: () => form.removeEventListener('submit', handler) };
@@ -22,6 +30,7 @@ vi.mock('$app/forms', () => ({
 
 beforeEach(() => {
 	submitCount = 0;
+	lastCallback = null;
 });
 
 describe('QuickAdd', () => {
@@ -93,5 +102,34 @@ describe('QuickAdd', () => {
 
 		expect(submitCount).toBe(1);
 		await expect.element(page.getByRole('menu')).not.toBeInTheDocument();
+	});
+
+	test('closes the dropdown when clicking outside it', async () => {
+		render(QuickAdd);
+		await page.getByRole('button', { name: /Einkaufsliste/ }).click();
+		await expect.element(page.getByRole('menu')).toBeVisible();
+
+		// The click-away backdrop, not a menu item.
+		await page.getByRole('button', { name: 'Menü schließen' }).click();
+		await expect.element(page.getByRole('menu')).not.toBeInTheDocument();
+	});
+
+	test('clears the input after a successful submit', async () => {
+		render(QuickAdd);
+		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
+		await page.getByRole('button', { name: 'Hinzufügen' }).click();
+
+		expect(submitCount).toBe(1);
+		await lastCallback?.({ result: { type: 'success' }, update: async () => {} });
+		await expect.element(page.getByPlaceholder('Schnell hinzufügen…')).toHaveValue('');
+	});
+
+	test('keeps the input value when the submit fails', async () => {
+		render(QuickAdd);
+		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
+		await page.getByRole('button', { name: 'Hinzufügen' }).click();
+
+		await lastCallback?.({ result: { type: 'failure' }, update: async () => {} });
+		await expect.element(page.getByPlaceholder('Schnell hinzufügen…')).toHaveValue('Milch');
 	});
 });

@@ -67,6 +67,24 @@ describe('sendMagicLinkMail', () => {
 		expect(mail.html).toContain('https://dahamm/verify?token=abc');
 	});
 
+	it('reuses the cached transporter across multiple sends', async () => {
+		Object.assign(mockEnv, {
+			SMTP_HOST: 'mail.example.de',
+			SMTP_PORT: '465',
+			SMTP_USER: 'bot@example.de',
+			SMTP_PASS: 'secret',
+			SMTP_FROM: 'dahamm@example.de'
+		});
+		const { sendMagicLinkMail } = await importMailer();
+
+		await sendMagicLinkMail('a@example.de', 'https://x/1');
+		await sendMagicLinkMail('b@example.de', 'https://x/2');
+
+		// The transport is built once and reused for the second send.
+		expect(createTransport).toHaveBeenCalledTimes(1);
+		expect(sendMail).toHaveBeenCalledTimes(2);
+	});
+
 	it('falls back to SMTP_USER as the sender when SMTP_FROM is unset', async () => {
 		Object.assign(mockEnv, {
 			SMTP_HOST: 'mail.example.de',
