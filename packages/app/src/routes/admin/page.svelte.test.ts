@@ -1,7 +1,12 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import Page from './+page.svelte';
+import { toast } from '$lib/components/toastStore.svelte';
+
+beforeEach(() => {
+	for (const t of [...toast.toasts]) toast.dismiss(t.id);
+});
 
 const currentUser = { id: 'admin-id', username: 'admin', isAdmin: true };
 
@@ -116,6 +121,13 @@ describe('Admin page', () => {
 
 	test('warns when a self-delete was blocked', async () => {
 		render(Page, { data: makeData(), form: { action: 'delete', error: 'self_delete' } });
-		await expect.element(page.getByText(/eigenen Eintrag nicht löschen/)).toBeVisible();
+		// The +page.svelte itself no longer renders the warning inline - it now
+		// triggers the global toast store, rendered separately by <Toast/> in
+		// +layout.svelte.
+		expect(
+			toast.toasts.some(
+				(t) => t.variant === 'error' && /eigenen Eintrag nicht löschen/.test(t.message)
+			)
+		).toBe(true);
 	});
 });

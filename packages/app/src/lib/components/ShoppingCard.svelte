@@ -5,6 +5,7 @@
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ShoppingItem } from '@dahamm/shared';
+	import { toast } from './toastStore.svelte';
 
 	// removeDelayMs ist als Prop herausgezogen, damit Tests die Gnadenfrist
 	// verkürzen können – in der App bleibt es bei 2 Sekunden.
@@ -62,8 +63,10 @@
 				if (result.type === 'success') {
 					hidden.add(id);
 					invalidateAll();
+				} else {
+					// Bei Fehler kein hidden/pending → der Posten erscheint wieder offen.
+					toast.show('error', 'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.');
 				}
-				// Bei Fehler kein hidden/pending → der Posten erscheint wieder offen.
 			};
 	}
 </script>

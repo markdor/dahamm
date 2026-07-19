@@ -1,10 +1,19 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { toast } from '$lib/components/toastStore.svelte';
 
 	let { data, form } = $props();
 
 	let editingId = $state<string | null>(null);
 	let copied = $state(false);
+
+	$effect(() => {
+		if (form?.error === 'self_delete') {
+			// untrack: see login/+page.svelte for why this is needed around toast.show().
+			untrack(() => toast.show('error', 'Du kannst deinen eigenen Eintrag nicht löschen.'));
+		}
+	});
 
 	const errorText: Record<string, string> = {
 		required: 'Pflichtfeld',
@@ -177,12 +186,6 @@
 	<!-- ── Benutzerliste ─────────────────────────────────────────── -->
 	<section class="space-y-4">
 		<h2 class="text-lg font-semibold">Benutzer ({data.users.length})</h2>
-
-		{#if form?.error === 'self_delete'}
-			<p class="rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900">
-				Du kannst deinen eigenen Eintrag nicht löschen.
-			</p>
-		{/if}
 
 		<ul class="space-y-2">
 			{#each data.users as u (u.id)}

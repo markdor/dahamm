@@ -55,6 +55,8 @@ Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
   | Primäre Buttons | `ShoppingCart`, `Plus` | `20` | `2` |
   | Sekundär (Dropdown-Indikator) | `ChevronDown` | `16` | `2` |
   | Inline-Status (klein, kräftig) | `Check` | `14` | `3` |
+  | Toast-Leiticon (visueller Anker) | `CircleAlert`, `CircleCheck`, `Info` | `20` | `2` |
+  | Toast-Schließen-Button | `X` | `16` | `2` |
 - Keine eigene Icon-Wrapper-Komponente – bei der aktuell überschaubaren Anzahl an Vorkommen reicht die direkte `size`/`strokeWidth`-Prop-Vergabe an der jeweiligen Nutzungsstelle; eine Abstraktion erst einführen, falls sich das Muster wiederholt.
 
 ### Dashboard (Startseite `/`)
@@ -69,6 +71,12 @@ Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
    - Einkaufsliste (offene Posten)
 
 Referenz-Mockup (heller Modus, Eukalyptus): ![Dahamm Dashboard Mockup](docs/ui/dashboard-mockup.png)
+
+### Toast / Status-Hinweise
+
+- Globale Komponente `src/lib/components/Toast.svelte` + Store `src/lib/components/toastStore.svelte.ts` (`toast.show(variant, message, durationMs?)`), einmalig in `+layout.svelte` gemountet – einzige Quelle für kurzzeitige Status-Hinweise (Error/Success/Info), löst alle Ad-hoc-Boxen ab.
+- `toastStore.svelte.ts` (nicht `toast.svelte.ts`: kollidiert TS-seitig case-insensitive mit `Toast.svelte`, sobald ohne Extension importiert – `forceConsistentCasingInFileNames` schlägt plattformunabhängig zu) ist der erste modul-globale `$state`-Runes-Store im Projekt (kein Svelte-Store-API, sondern reines `$state` + Getter auf Modulebene).
+- **Fallstrick:** Wird `toast.show(...)` aus einem `$effect` heraus aufgerufen (z. B. um einen Server-Fehler aus `data`/`form` zu melden), muss der Aufruf in `untrack(() => …)` (aus `'svelte'`) gewrappt werden – sonst hängt der Effect transitiv vom internen State des Stores ab (der Store liest beim Schreiben seinen eigenen Zustand) und läuft in eine Endlosschleife (`effect_update_depth_exceeded`).
 
 ---
 
@@ -253,6 +261,10 @@ Trigger: `on: push` (alle Branches) + `workflow_dispatch`. Drei Jobs, analog gri
 Action-Versionen sinngemäß auf aktuellem Stand pinnen (gritshot aktuell: `checkout@v6`,
 `setup-node@v6`, `upload-artifact@v7`, `create-github-app-token@v3`,
 `semantic-release-action@v6`, `docker/*` v4/v6/v7).
+
+### PR ↔ Issue-Verknüpfung
+
+`.github/pull_request_template.md` enthält eine `Closes #`-Zeile. Wird dort die Issue-Nummer eingetragen (z. B. `Closes #24`), schließt GitHub das Issue automatisch beim Merge des PRs – kein separater Workflow nötig, funktioniert nativ über GitHubs Closing-Keywords.
 
 ### Dependabot Auto-Merge (`.github/workflows/dependabot-automerge.yml`)
 

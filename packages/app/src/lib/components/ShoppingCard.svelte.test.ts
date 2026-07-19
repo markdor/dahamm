@@ -3,6 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import type { ShoppingItem } from '@dahamm/shared';
 import ShoppingCard from './ShoppingCard.svelte';
+import { toast } from './toastStore.svelte';
 
 const invalidateAll = vi.fn();
 
@@ -147,5 +148,7 @@ describe('ShoppingCard', () => {
 		expect(invalidateAll).not.toHaveBeenCalled();
 		// The tap can be repeated, i.e. the button reverts to the "abhaken" state.
 		await expect.element(page.getByRole('button', { name: 'Milch abhaken' })).toBeVisible();
+		// The previously silent failure now surfaces as an error toast.
+		expect(toast.toasts.some((t) => t.variant === 'error')).toBe(true);
 	});
 });
