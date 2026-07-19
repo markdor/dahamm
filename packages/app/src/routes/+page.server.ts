@@ -21,10 +21,10 @@ export const actions: Actions = {
 			createShoppingItem(db, name);
 		} catch (err) {
 			if (err instanceof ShoppingItemValidationError) {
-				return fail(422, { action: 'addShoppingItem', error: err.userMessage });
+				return fail(422, { action: 'addShoppingItem', userMessage: err.userMessage });
 			}
 			logger.error({ err }, 'failed to create shopping item');
-			return fail(500, { action: 'addShoppingItem', error: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'addShoppingItem', userMessage: 'Da ist etwas schiefgelaufen.' });
 		}
 
 		return { action: 'addShoppingItem', added: true };
@@ -33,13 +33,20 @@ export const actions: Actions = {
 	completeShoppingItem: async ({ request }) => {
 		const form = await request.formData();
 		const id = String(form.get('id') ?? '');
-		if (!id) return fail(400, { action: 'completeShoppingItem', error: 'missing_id' });
+		if (!id)
+			return fail(400, {
+				action: 'completeShoppingItem',
+				userMessage: 'Eintrag konnte nicht verarbeitet werden.'
+			});
 
 		try {
 			completeShoppingItem(db, id);
 		} catch (err) {
 			logger.error({ err }, 'failed to complete shopping item');
-			return fail(500, { action: 'completeShoppingItem', error: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, {
+				action: 'completeShoppingItem',
+				userMessage: 'Da ist etwas schiefgelaufen.'
+			});
 		}
 
 		return { action: 'completeShoppingItem', completed: true };

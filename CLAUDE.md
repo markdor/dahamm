@@ -301,10 +301,12 @@ Holt die Metadaten via `dependabot/fetch-metadata`, aktiviert Auto-Merge (squash
   }
   ```
 - **Handler-Pattern** (SvelteKit Action / Bot-Handler):
-  - Validierungsfehler → `fail(422, { error: e.userMessage })` bzw. lesbare Telegram-Antwort
+  - Validierungsfehler → `fail(422, { userMessage: e.userMessage })` bzw. lesbare Telegram-Antwort
   - Unerwarteter Fehler → `logger.error(...)` + generische User-Meldung (`fail(500, ...)`)
   - `catch (e: unknown)`, dann via `instanceof` verengen
 - Niemals interne Fehlertexte oder Stacktraces an den Nutzer durchreichen.
+- **`userMessage`-Vertrag in `fail()`-Payloads**: Jede generische (nicht feld-bezogene) Action-Fehlermeldung nutzt ausschließlich das Feld `userMessage` – nie interne Codes wie `'not_found'`/`'missing_id'` in einem generischen `error`-Feld. Der Client (`toastActionFailure()` in `src/lib/components/actionToast.ts`) liest `result.data?.userMessage` blind und zeigt es per Toast an, mit Fallback-Text nur wenn das Feld fehlt – es gibt also keinen Guard/Whitelist mehr auf Client-Seite, die Sicherheit kommt allein daher, dass der Server nie einen internen Code in dieses Feld schreibt.
+  - **Ausnahme `fieldErrors`**: Per-Feld-Validierungsfehler (z. B. `admin/+page.server.ts`, Codes `required`/`invalid`/`taken`) bleiben ein separates Pattern – dort sind es bewusst kurze, whitelisted Codes, die client-seitig über eine feste Map (`errorText` in `admin/+page.svelte`) in Text übersetzt werden, weil sie inline am jeweiligen Feld angezeigt werden, nicht global im Toast.
 
 Vor neuen Arbeiten in diesen Bereichen: in `gritshot` (Code) bzw. `vps-config/tandoor` (Compose)
 verifizieren, ob die Konvention noch aktuell ist.

@@ -211,12 +211,21 @@ describe('admin update', () => {
 		const result = await actions.update(
 			makeEvent({ id: 'ghost', email: 'g@dahamm.de', username: 'ghost' })
 		);
-		expect(result).toMatchObject({ status: 404, data: { error: 'not_found' } });
+		expect(result).toMatchObject({
+			status: 404,
+			data: {
+				userMessage:
+					'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+			}
+		});
 	});
 
 	it('returns 400 without an id', async () => {
 		const result = await actions.update(makeEvent({ email: 'g@dahamm.de', username: 'g' }));
-		expect(result).toMatchObject({ status: 400, data: { error: 'missing_id' } });
+		expect(result).toMatchObject({
+			status: 400,
+			data: { userMessage: 'Eintrag konnte nicht verarbeitet werden.' }
+		});
 	});
 
 	it('returns 409 when the new email collides', async () => {
@@ -280,7 +289,10 @@ describe('admin delete', () => {
 
 	it('refuses to delete the current admin (self)', async () => {
 		const result = await actions.delete(makeEvent({ id: ADMIN.id }));
-		expect(result).toMatchObject({ status: 400, data: { error: 'self_delete' } });
+		expect(result).toMatchObject({
+			status: 400,
+			data: { userMessage: 'Du kannst deinen eigenen Eintrag nicht löschen.' }
+		});
 		expect(
 			db
 				.select()
@@ -292,12 +304,21 @@ describe('admin delete', () => {
 
 	it('returns 404 for an unknown id', async () => {
 		const result = await actions.delete(makeEvent({ id: 'ghost' }));
-		expect(result).toMatchObject({ status: 404, data: { error: 'not_found' } });
+		expect(result).toMatchObject({
+			status: 404,
+			data: {
+				userMessage:
+					'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+			}
+		});
 	});
 
 	it('returns 400 without an id', async () => {
 		const result = await actions.delete(makeEvent({}));
-		expect(result).toMatchObject({ status: 400, data: { error: 'missing_id' } });
+		expect(result).toMatchObject({
+			status: 400,
+			data: { userMessage: 'Eintrag konnte nicht verarbeitet werden.' }
+		});
 	});
 });
 

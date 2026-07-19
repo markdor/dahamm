@@ -5,7 +5,7 @@
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ShoppingItem } from '@dahamm/shared';
-	import { toast } from './toastStore.svelte';
+	import { toastActionFailure } from './actionToast';
 
 	// removeDelayMs ist als Prop herausgezogen, damit Tests die Gnadenfrist
 	// verkürzen können – in der App bleibt es bei 2 Sekunden.
@@ -65,13 +65,9 @@
 					invalidateAll();
 				} else {
 					// Bei Fehler kein hidden/pending → der Posten erscheint wieder offen.
-					const serverMessage =
-						result.type === 'failure' && typeof result.data?.error === 'string'
-							? result.data.error
-							: undefined;
-					toast.show(
-						'error',
-						serverMessage ?? 'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.'
+					toastActionFailure(
+						result,
+						'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.'
 					);
 				}
 			};

@@ -166,7 +166,7 @@ describe('ShoppingCard', () => {
 		expect(heldCallbacks.length).toBe(1);
 
 		heldCallbacks[0]({
-			result: { type: 'failure', data: { error: 'Eintrag ist bereits erledigt.' } }
+			result: { type: 'failure', data: { userMessage: 'Eintrag ist bereits erledigt.' } }
 		});
 		expect(
 			toast.toasts.some(

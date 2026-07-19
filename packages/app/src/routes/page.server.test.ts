@@ -65,7 +65,7 @@ describe('addShoppingItem action', () => {
 		const result = await actions.addShoppingItem(makeEvent({ name: 'ab' }));
 		expect(result).toMatchObject({
 			status: 422,
-			data: { action: 'addShoppingItem', error: expect.stringContaining('Zeichen lang sein') }
+			data: { action: 'addShoppingItem', userMessage: expect.stringContaining('Zeichen lang sein') }
 		});
 		expect(db.select().from(shoppingItem).all()).toHaveLength(0);
 	});
@@ -79,7 +79,7 @@ describe('addShoppingItem action', () => {
 		const result = await actions.addShoppingItem(makeEvent({ name: 'Brot' }));
 		expect(result).toMatchObject({
 			status: 500,
-			data: { action: 'addShoppingItem', error: 'Da ist etwas schiefgelaufen.' }
+			data: { action: 'addShoppingItem', userMessage: 'Da ist etwas schiefgelaufen.' }
 		});
 		expect(logger.error).toHaveBeenCalledWith({ err }, 'failed to create shopping item');
 
@@ -102,7 +102,10 @@ describe('completeShoppingItem action', () => {
 		const result = await actions.completeShoppingItem(makeEvent({}));
 		expect(result).toMatchObject({
 			status: 400,
-			data: { action: 'completeShoppingItem', error: 'missing_id' }
+			data: {
+				action: 'completeShoppingItem',
+				userMessage: 'Eintrag konnte nicht verarbeitet werden.'
+			}
 		});
 	});
 
@@ -115,7 +118,7 @@ describe('completeShoppingItem action', () => {
 		const result = await actions.completeShoppingItem(makeEvent({ id: '1' }));
 		expect(result).toMatchObject({
 			status: 500,
-			data: { action: 'completeShoppingItem', error: 'Da ist etwas schiefgelaufen.' }
+			data: { action: 'completeShoppingItem', userMessage: 'Da ist etwas schiefgelaufen.' }
 		});
 		expect(logger.error).toHaveBeenCalledWith({ err }, 'failed to complete shopping item');
 

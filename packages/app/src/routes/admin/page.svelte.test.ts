@@ -120,7 +120,10 @@ describe('Admin page', () => {
 	});
 
 	test('warns when a self-delete was blocked', async () => {
-		render(Page, { data: makeData(), form: { action: 'delete', error: 'self_delete' } });
+		render(Page, {
+			data: makeData(),
+			form: { action: 'delete', userMessage: 'Du kannst deinen eigenen Eintrag nicht löschen.' }
+		});
 		// The +page.svelte itself no longer renders the warning inline - it now
 		// triggers the global toast store, rendered separately by <Toast/> in
 		// +layout.svelte.
@@ -128,6 +131,22 @@ describe('Admin page', () => {
 			toast.toasts.some(
 				(t) => t.variant === 'error' && /eigenen Eintrag nicht löschen/.test(t.message)
 			)
+		).toBe(true);
+	});
+
+	test('shows a toast for any generic action failure carrying a userMessage', async () => {
+		render(Page, {
+			data: makeData(),
+			form: {
+				action: 'delete',
+				userMessage:
+					'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+			}
+		});
+		// Not a special-cased error like self_delete - proves the effect reacts
+		// to any userMessage, not just the one hardcoded reason.
+		expect(
+			toast.toasts.some((t) => t.variant === 'error' && /wurde nicht gefunden/.test(t.message))
 		).toBe(true);
 	});
 });

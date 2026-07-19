@@ -9,9 +9,9 @@
 	let copied = $state(false);
 
 	$effect(() => {
-		if (form?.error === 'self_delete') {
+		if (form?.userMessage) {
 			// untrack: see login/+page.svelte for why this is needed around toast.show().
-			untrack(() => toast.show('error', 'Du kannst deinen eigenen Eintrag nicht löschen.'));
+			untrack(() => toast.show('error', form.userMessage as string));
 		}
 	});
 

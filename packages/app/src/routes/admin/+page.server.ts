@@ -124,7 +124,11 @@ export const actions: Actions = {
 		const rawTelegram = String(form.get('telegramUserId') ?? '');
 		const isAdmin = form.get('isAdmin') === 'on';
 
-		if (!id) return fail(400, { action: 'update', error: 'missing_id' });
+		if (!id)
+			return fail(400, {
+				action: 'update',
+				userMessage: 'Eintrag konnte nicht verarbeitet werden.'
+			});
 
 		const { email, username, telegramUserId, fieldErrors } = validate(
 			rawEmail,
@@ -160,7 +164,11 @@ export const actions: Actions = {
 				.where(eq(user.id, id))
 				.run();
 			if (result.changes === 0) {
-				return fail(404, { action: 'update', error: 'not_found' });
+				return fail(404, {
+					action: 'update',
+					userMessage:
+						'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+				});
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
@@ -185,18 +193,29 @@ export const actions: Actions = {
 		const current = requireAdmin(locals);
 		const form = await request.formData();
 		const id = String(form.get('id') ?? '');
-		if (!id) return fail(400, { action: 'delete', error: 'missing_id' });
+		if (!id)
+			return fail(400, {
+				action: 'delete',
+				userMessage: 'Eintrag konnte nicht verarbeitet werden.'
+			});
 
 		// Self-protection: an admin must not delete their own entry.
 		if (id === current.id) {
-			return fail(400, { action: 'delete', error: 'self_delete' });
+			return fail(400, {
+				action: 'delete',
+				userMessage: 'Du kannst deinen eigenen Eintrag nicht löschen.'
+			});
 		}
 
 		// session.userId has ON DELETE CASCADE, so all of the user's active
 		// sessions die with the row → forced logout on their next request.
 		const result = db.delete(user).where(eq(user.id, id)).run();
 		if (result.changes === 0) {
-			return fail(404, { action: 'delete', error: 'not_found' });
+			return fail(404, {
+				action: 'delete',
+				userMessage:
+					'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+			});
 		}
 
 		return { action: 'delete', deleted: true };
