@@ -65,7 +65,14 @@
 					invalidateAll();
 				} else {
 					// Bei Fehler kein hidden/pending → der Posten erscheint wieder offen.
-					toast.show('error', 'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.');
+					const serverMessage =
+						result.type === 'failure' && typeof result.data?.error === 'string'
+							? result.data.error
+							: undefined;
+					toast.show(
+						'error',
+						serverMessage ?? 'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.'
+					);
 				}
 			};
 	}
