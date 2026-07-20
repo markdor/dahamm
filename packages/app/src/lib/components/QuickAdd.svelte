@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Plus, ShoppingCart } from '@lucide/svelte';
 	import { QUICK_ADD_TARGETS, SHOPPING_ITEM_NAME_LENGTH } from '@dahamm/shared';
+	import { toastActionFailure } from './actionToast';
 
 	// Globales Schnell-Hinzufügen auf dem Dashboard.
 	// Ein Icon vor dem Eingabefeld zeigt das aktuell gewählte Ziel und öffnet
@@ -31,7 +32,14 @@
 	class="flex gap-2"
 	use:enhance={() => {
 		return async ({ result, update }) => {
-			if (result.type === 'success') value = '';
+			if (result.type === 'success') {
+				value = '';
+			} else {
+				toastActionFailure(
+					result,
+					'Eintrag konnte nicht hinzugefügt werden. Bitte versuche es erneut.'
+				);
+			}
 			// reset:false – wir leeren das Feld selbst; update() lädt die Daten neu,
 			// damit die Karte den frischen Posten zeigt.
 			await update({ reset: false });

@@ -3,6 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import type { ShoppingItem } from '@dahamm/shared';
 import ShoppingCard from './ShoppingCard.svelte';
+import { toast } from './toastStore.svelte';
 
 const invalidateAll = vi.fn();
 
@@ -14,15 +15,13 @@ const invalidateAll = vi.fn();
 // When `holdCallbacks` is set, the persist callback is captured in
 // `heldCallbacks` instead of auto-resolving, so a test can inspect the
 // component while a submit is in flight and resolve it explicitly.
+type PersistResult = { type: string; data?: Record<string, unknown> };
 let holdCallbacks = false;
-let heldCallbacks: Array<(opts: { result: { type: string } }) => unknown> = [];
+let heldCallbacks: Array<(opts: { result: PersistResult }) => unknown> = [];
 
 vi.mock('$app/navigation', () => ({ invalidateAll: () => invalidateAll() }));
 vi.mock('$app/forms', () => ({
-	enhance: (
-		form: HTMLFormElement,
-		submit: () => (opts: { result: { type: string } }) => unknown
-	) => {
+	enhance: (form: HTMLFormElement, submit: () => (opts: { result: PersistResult }) => unknown) => {
 		const handler = (event: Event) => {
 			event.preventDefault();
 			const callback = submit();
@@ -44,6 +43,7 @@ function item(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
 beforeEach(() => {
 	holdCallbacks = false;
 	heldCallbacks = [];
+	for (const t of [...toast.toasts]) toast.dismiss(t.id);
 });
 
 describe('ShoppingCard', () => {
@@ -147,5 +147,31 @@ describe('ShoppingCard', () => {
 		expect(invalidateAll).not.toHaveBeenCalled();
 		// The tap can be repeated, i.e. the button reverts to the "abhaken" state.
 		await expect.element(page.getByRole('button', { name: 'Milch abhaken' })).toBeVisible();
+		// No server message on this result, so the generic fallback is shown.
+		expect(
+			toast.toasts.some(
+				(t) =>
+					t.variant === 'error' &&
+					t.message === 'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.'
+			)
+		).toBe(true);
+	});
+
+	test('surfaces the server-provided error message on a failed persist', async () => {
+		holdCallbacks = true;
+		render(ShoppingCard, { items: [item('Milch')], removeDelayMs: 10 });
+
+		await page.getByRole('button', { name: 'Milch abhaken' }).click();
+		await new Promise((r) => setTimeout(r, 40));
+		expect(heldCallbacks.length).toBe(1);
+
+		heldCallbacks[0]({
+			result: { type: 'failure', data: { userMessage: 'Eintrag ist bereits erledigt.' } }
+		});
+		expect(
+			toast.toasts.some(
+				(t) => t.variant === 'error' && t.message === 'Eintrag ist bereits erledigt.'
+			)
+		).toBe(true);
 	});
 });

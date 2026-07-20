@@ -2,21 +2,23 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import QuickAdd from './QuickAdd.svelte';
+import { toast } from './toastStore.svelte';
 
 // Stub `enhance` so submitting the form runs the component's submit logic
 // without a network call against a server that doesn't exist in a unit test,
 // while letting tests observe how often a real submit happened and control
 // the after-submit callback (result.type) explicitly.
+type PersistResult = { type: string; data?: Record<string, unknown> };
 let submitCount = 0;
 let lastCallback:
-	((opts: { result: { type: string }; update: () => Promise<void> }) => unknown) | null = null;
+	((opts: { result: PersistResult; update: () => Promise<void> }) => unknown) | null = null;
 
 vi.mock('$app/forms', () => ({
 	enhance: (
 		form: HTMLFormElement,
 		submit: (input: {
 			cancel: () => void;
-		}) => (opts: { result: { type: string }; update: () => Promise<void> }) => unknown
+		}) => (opts: { result: PersistResult; update: () => Promise<void> }) => unknown
 	) => {
 		const handler = (event: Event) => {
 			event.preventDefault();
@@ -31,6 +33,7 @@ vi.mock('$app/forms', () => ({
 beforeEach(() => {
 	submitCount = 0;
 	lastCallback = null;
+	for (const t of [...toast.toasts]) toast.dismiss(t.id);
 });
 
 describe('QuickAdd', () => {
@@ -131,5 +134,41 @@ describe('QuickAdd', () => {
 
 		await lastCallback?.({ result: { type: 'failure' }, update: async () => {} });
 		await expect.element(page.getByPlaceholder('Schnell hinzufügen…')).toHaveValue('Milch');
+	});
+
+	test('shows the server-provided error message as a toast when the submit fails', async () => {
+		render(QuickAdd);
+		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
+		await page.getByRole('button', { name: 'Hinzufügen' }).click();
+
+		await lastCallback?.({
+			result: {
+				type: 'failure',
+				data: { userMessage: 'Der Name muss zwischen 3 und 64 Zeichen lang sein.' }
+			},
+			update: async () => {}
+		});
+		expect(
+			toast.toasts.some(
+				(t) =>
+					t.variant === 'error' &&
+					t.message === 'Der Name muss zwischen 3 und 64 Zeichen lang sein.'
+			)
+		).toBe(true);
+	});
+
+	test('falls back to a generic toast message when the failure carries no userMessage', async () => {
+		render(QuickAdd);
+		await page.getByPlaceholder('Schnell hinzufügen…').fill('Milch');
+		await page.getByRole('button', { name: 'Hinzufügen' }).click();
+
+		await lastCallback?.({ result: { type: 'failure' }, update: async () => {} });
+		expect(
+			toast.toasts.some(
+				(t) =>
+					t.variant === 'error' &&
+					t.message === 'Eintrag konnte nicht hinzugefügt werden. Bitte versuche es erneut.'
+			)
+		).toBe(true);
 	});
 });

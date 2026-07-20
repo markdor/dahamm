@@ -2,6 +2,7 @@
 	import './layout.css';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 
 	let { data, children } = $props();
 </script>
@@ -15,3 +16,4 @@
 	</main>
 	<Footer />
 </div>
+<Toast />

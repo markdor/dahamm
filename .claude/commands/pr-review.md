@@ -1,5 +1,7 @@
 ---
 description: Tiefenprüfung eines Pull Requests vor dem Merge – Qualität, Security, UX, Clean Code, Architektur gegen CLAUDE.md. Aufruf: /pr-review <PR-Nummer>
+model: sonnet
+effort: max
 ---
 
 Du prüfst einen Pull Request vor dem Merge. Ziel ist eine ehrliche, fundierte Einschätzung entlang fünf Dimensionen – keine Kosmetik-Kommentare, sondern Befunde, die tatsächlich mergerelevant sind.
