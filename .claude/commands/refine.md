@@ -1,5 +1,7 @@
 ---
 description: Refinement eines GitHub Issues – Interview → Code-Analyse → vollständig ausformuliertes Issue. Aufruf: /refine <Issue-Nummer>
+model: sonnet
+effort: max
 ---
 
 Du führst ein strukturiertes Issue-Refinement durch. Ausgangslage ist ein kurz formuliertes Backlog-Item; das Ergebnis ist ein vollständig ausformuliertes, technisch fundiertes GitHub Issue.

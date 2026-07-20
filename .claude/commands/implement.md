@@ -1,5 +1,7 @@
 ---
 description: Einstieg in die Implementierung eines GitHub Issues – Kontext laden → Codebase-Analyse → Implementierungsplan. Aufruf: /implement <Issue-Nummer>
+model: sonnet
+effort: max
 ---
 
 Du bereitest die Implementierung eines GitHub Issues vor. Ziel ist **nicht**, den Code fertig zu schreiben, sondern einen fundierten Implementierungsplan zu erarbeiten und zur Freigabe vorzulegen. Die eigentliche Umsetzung läuft danach wie gewohnt interaktiv im Chat weiter.
