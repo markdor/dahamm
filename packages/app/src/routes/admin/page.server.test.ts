@@ -163,15 +163,17 @@ describe('admin create', () => {
 		});
 	});
 
-	it('rethrows and logs an unexpected (non-UNIQUE) database error', async () => {
+	it('logs and returns 500 on an unexpected (non-UNIQUE) database error', async () => {
 		const err = new Error('disk full');
 		const insertSpy = vi.spyOn(db, 'insert').mockImplementationOnce(() => {
 			throw err;
 		});
 
-		await expect(actions.create(makeEvent({ email: 'x@dahamm.de', username: 'xx' }))).rejects.toBe(
-			err
-		);
+		const result = await actions.create(makeEvent({ email: 'x@dahamm.de', username: 'xx' }));
+		expect(result).toMatchObject({
+			status: 500,
+			data: { action: 'create', userMessage: 'Da ist etwas schiefgelaufen.' }
+		});
 		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin create user failed');
 
 		insertSpy.mockRestore();
@@ -244,16 +246,18 @@ describe('admin update', () => {
 		});
 	});
 
-	it('rethrows and logs an unexpected (non-UNIQUE) database error', async () => {
+	it('logs and returns 500 on an unexpected (non-UNIQUE) database error', async () => {
 		const id = insertUser({ email: 'e@dahamm.de', username: 'e' });
 		const err = new Error('disk full');
 		const updateSpy = vi.spyOn(db, 'update').mockImplementationOnce(() => {
 			throw err;
 		});
 
-		await expect(
-			actions.update(makeEvent({ id, email: 'e2@dahamm.de', username: 'e2' }))
-		).rejects.toBe(err);
+		const result = await actions.update(makeEvent({ id, email: 'e2@dahamm.de', username: 'e2' }));
+		expect(result).toMatchObject({
+			status: 500,
+			data: { action: 'update', userMessage: 'Da ist etwas schiefgelaufen.' }
+		});
 		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin update user failed');
 
 		updateSpy.mockRestore();
@@ -320,6 +324,23 @@ describe('admin delete', () => {
 			data: { userMessage: 'Eintrag konnte nicht verarbeitet werden.' }
 		});
 	});
+
+	it('logs and returns 500 on an unexpected database error', async () => {
+		const id = insertUser({ email: 'boom@dahamm.de', username: 'boom' });
+		const err = new Error('disk full');
+		const deleteSpy = vi.spyOn(db, 'delete').mockImplementationOnce(() => {
+			throw err;
+		});
+
+		const result = await actions.delete(makeEvent({ id }));
+		expect(result).toMatchObject({
+			status: 500,
+			data: { action: 'delete', userMessage: 'Da ist etwas schiefgelaufen.' }
+		});
+		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin delete user failed');
+
+		deleteSpy.mockRestore();
+	});
 });
 
 describe('admin guards on actions', () => {
@@ -354,5 +375,38 @@ describe('admin bot token', () => {
 		await expect(
 			actions.generateToken(makeEvent({}, { id: 'u', isAdmin: false }))
 		).rejects.toMatchObject({ status: 403 });
+	});
+
+	it('logs and returns 500 when generating a token hits a database error', async () => {
+		const err = new Error('disk full');
+		const deleteSpy = vi.spyOn(db, 'delete').mockImplementationOnce(() => {
+			throw err;
+		});
+
+		const result = await actions.generateToken(makeEvent({}));
+		expect(result).toMatchObject({
+			status: 500,
+			data: { action: 'generateToken', userMessage: 'Da ist etwas schiefgelaufen.' }
+		});
+		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin generate bot token failed');
+
+		deleteSpy.mockRestore();
+	});
+
+	it('logs and returns 500 when revoking a token hits a database error', async () => {
+		await actions.generateToken(makeEvent({}));
+		const err = new Error('disk full');
+		const deleteSpy = vi.spyOn(db, 'delete').mockImplementationOnce(() => {
+			throw err;
+		});
+
+		const result = await actions.revokeToken(makeEvent({}));
+		expect(result).toMatchObject({
+			status: 500,
+			data: { action: 'revokeToken', userMessage: 'Da ist etwas schiefgelaufen.' }
+		});
+		expect(logger.error).toHaveBeenCalledWith({ err }, 'admin revoke bot token failed');
+
+		deleteSpy.mockRestore();
 	});
 });

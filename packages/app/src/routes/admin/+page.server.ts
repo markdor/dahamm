@@ -109,7 +109,7 @@ export const actions: Actions = {
 				});
 			}
 			logger.error({ err }, 'admin create user failed');
-			throw err;
+			return fail(500, { action: 'create', userMessage: 'Da ist etwas schiefgelaufen.' });
 		}
 
 		return { action: 'create', created: true };
@@ -183,7 +183,7 @@ export const actions: Actions = {
 				});
 			}
 			logger.error({ err }, 'admin update user failed');
-			throw err;
+			return fail(500, { action: 'update', userMessage: 'Da ist etwas schiefgelaufen.' });
 		}
 
 		return { action: 'update', updated: true, selfDemoteBlocked: targetIsCurrent && !isAdmin };
@@ -207,15 +207,20 @@ export const actions: Actions = {
 			});
 		}
 
-		// session.userId has ON DELETE CASCADE, so all of the user's active
-		// sessions die with the row → forced logout on their next request.
-		const result = db.delete(user).where(eq(user.id, id)).run();
-		if (result.changes === 0) {
-			return fail(404, {
-				action: 'delete',
-				userMessage:
-					'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
-			});
+		try {
+			// session.userId has ON DELETE CASCADE, so all of the user's active
+			// sessions die with the row → forced logout on their next request.
+			const result = db.delete(user).where(eq(user.id, id)).run();
+			if (result.changes === 0) {
+				return fail(404, {
+					action: 'delete',
+					userMessage:
+						'Dieser Benutzer wurde nicht gefunden – möglicherweise wurde er bereits gelöscht.'
+				});
+			}
+		} catch (err) {
+			logger.error({ err }, 'admin delete user failed');
+			return fail(500, { action: 'delete', userMessage: 'Da ist etwas schiefgelaufen.' });
 		}
 
 		return { action: 'delete', deleted: true };
@@ -223,14 +228,24 @@ export const actions: Actions = {
 
 	generateToken: async ({ locals }) => {
 		requireAdmin(locals);
-		// Plaintext is returned exactly once; only the hash is stored.
-		const token = generateBotToken(db);
-		return { action: 'generateToken', token };
+		try {
+			// Plaintext is returned exactly once; only the hash is stored.
+			const token = generateBotToken(db);
+			return { action: 'generateToken', token };
+		} catch (err) {
+			logger.error({ err }, 'admin generate bot token failed');
+			return fail(500, { action: 'generateToken', userMessage: 'Da ist etwas schiefgelaufen.' });
+		}
 	},
 
 	revokeToken: async ({ locals }) => {
 		requireAdmin(locals);
-		revokeBotToken(db);
-		return { action: 'revokeToken', revoked: true };
+		try {
+			revokeBotToken(db);
+			return { action: 'revokeToken', revoked: true };
+		} catch (err) {
+			logger.error({ err }, 'admin revoke bot token failed');
+			return fail(500, { action: 'revokeToken', userMessage: 'Da ist etwas schiefgelaufen.' });
+		}
 	}
 };
