@@ -1,5 +1,6 @@
 import { fail, type Actions, type ServerLoad } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
+import { UNEXPECTED_ERROR_MESSAGE } from '$lib/server/errorMessages';
 import { logger } from '$lib/server/logger';
 import {
 	completeShoppingItem,
@@ -24,7 +25,7 @@ export const actions: Actions = {
 				return fail(422, { action: 'addShoppingItem', userMessage: err.userMessage });
 			}
 			logger.error({ err }, 'failed to create shopping item');
-			return fail(500, { action: 'addShoppingItem', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'addShoppingItem', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 
 		return { action: 'addShoppingItem', added: true };
@@ -45,7 +46,7 @@ export const actions: Actions = {
 			logger.error({ err }, 'failed to complete shopping item');
 			return fail(500, {
 				action: 'completeShoppingItem',
-				userMessage: 'Da ist etwas schiefgelaufen.'
+				userMessage: UNEXPECTED_ERROR_MESSAGE
 			});
 		}
 
