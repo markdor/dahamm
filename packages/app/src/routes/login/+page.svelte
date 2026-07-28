@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { isValidEmail } from '@dahamm/shared';
 	import { authClient } from '$lib/auth-client';
 	import logo from '$lib/assets/dahamm-320.png';
 	import { toast } from '$lib/components/toastStore.svelte';
 
 	let { data } = $props();
-
-	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 	let email = $state('');
 	let submitting = $state(false);
@@ -31,7 +30,7 @@
 		invalidEmail = false;
 
 		const value = email.trim().toLowerCase();
-		if (!EMAIL_RE.test(value) || value.length > 254) {
+		if (!isValidEmail(value)) {
 			invalidEmail = true;
 			return;
 		}
