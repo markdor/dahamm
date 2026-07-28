@@ -5,6 +5,7 @@ import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/authGuards';
 import { generateBotToken, getBotTokenStatus, revokeBotToken } from '$lib/server/botToken';
+import { UNEXPECTED_ERROR_MESSAGE } from '$lib/server/errorMessages';
 import { logger } from '$lib/server/logger';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,7 +110,7 @@ export const actions: Actions = {
 				});
 			}
 			logger.error({ err }, 'admin create user failed');
-			return fail(500, { action: 'create', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'create', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 
 		return { action: 'create', created: true };
@@ -183,7 +184,7 @@ export const actions: Actions = {
 				});
 			}
 			logger.error({ err }, 'admin update user failed');
-			return fail(500, { action: 'update', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'update', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 
 		return { action: 'update', updated: true, selfDemoteBlocked: targetIsCurrent && !isAdmin };
@@ -220,7 +221,7 @@ export const actions: Actions = {
 			}
 		} catch (err) {
 			logger.error({ err }, 'admin delete user failed');
-			return fail(500, { action: 'delete', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'delete', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 
 		return { action: 'delete', deleted: true };
@@ -234,7 +235,7 @@ export const actions: Actions = {
 			return { action: 'generateToken', token };
 		} catch (err) {
 			logger.error({ err }, 'admin generate bot token failed');
-			return fail(500, { action: 'generateToken', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'generateToken', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 	},
 
@@ -245,7 +246,7 @@ export const actions: Actions = {
 			return { action: 'revokeToken', revoked: true };
 		} catch (err) {
 			logger.error({ err }, 'admin revoke bot token failed');
-			return fail(500, { action: 'revokeToken', userMessage: 'Da ist etwas schiefgelaufen.' });
+			return fail(500, { action: 'revokeToken', userMessage: UNEXPECTED_ERROR_MESSAGE });
 		}
 	}
 };
