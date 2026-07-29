@@ -1,16 +1,13 @@
 import { fail, type Actions, type ServerLoad } from '@sveltejs/kit';
 import { asc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { isValidEmail, USERNAME_RE, TELEGRAM_RE } from '@dahamm/shared';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/authGuards';
 import { generateBotToken, getBotTokenStatus, revokeBotToken } from '$lib/server/botToken';
 import { UNEXPECTED_ERROR_MESSAGE } from '$lib/server/errorMessages';
 import { logger } from '$lib/server/logger';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_RE = /^[a-zA-Z0-9_.-]{2,40}$/;
-const TELEGRAM_RE = /^\d{1,20}$/;
 
 export const load: ServerLoad = ({ locals }) => {
 	requireAdmin(locals);
@@ -42,7 +39,7 @@ function validate(
 	const fieldErrors: Record<string, string> = {};
 
 	if (!email) fieldErrors.email = 'required';
-	else if (!EMAIL_RE.test(email) || email.length > 254) fieldErrors.email = 'invalid';
+	else if (!isValidEmail(email)) fieldErrors.email = 'invalid';
 
 	if (!username) fieldErrors.username = 'required';
 	else if (!USERNAME_RE.test(username)) fieldErrors.username = 'invalid';

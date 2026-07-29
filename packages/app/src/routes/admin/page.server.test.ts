@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import type { RequestEvent } from '@sveltejs/kit';
+import { EMAIL_LENGTH } from '@dahamm/shared';
 
 vi.mock('$lib/server/db', async () => {
 	const Database = (await import('better-sqlite3')).default;
@@ -118,6 +119,25 @@ describe('admin create', () => {
 	it('rejects an invalid email', async () => {
 		const result = await actions.create(makeEvent({ email: 'nope', username: 'x' }));
 		expect(result).toMatchObject({ status: 400, data: { fieldErrors: { email: 'invalid' } } });
+	});
+
+	it('accepts an email at exactly the maximum length', async () => {
+		const email = `${'a'.repeat(EMAIL_LENGTH.max - '@dahamm.de'.length)}@dahamm.de`;
+		expect(email.length).toBe(EMAIL_LENGTH.max);
+		const result = await actions.create(makeEvent({ email, username: 'longmail' }));
+		expect(result).toEqual({ action: 'create', created: true });
+	});
+
+	it('rejects an email longer than the shared maximum', async () => {
+		const email = `${'a'.repeat(EMAIL_LENGTH.max - '@dahamm.de'.length + 1)}@dahamm.de`;
+		expect(email.length).toBe(EMAIL_LENGTH.max + 1);
+		const result = await actions.create(makeEvent({ email, username: 'toolongmail' }));
+		expect(result).toMatchObject({ status: 400, data: { fieldErrors: { email: 'invalid' } } });
+	});
+
+	it('rejects an invalid username pattern', async () => {
+		const result = await actions.create(makeEvent({ email: 'shortname@dahamm.de', username: 'a' }));
+		expect(result).toMatchObject({ status: 400, data: { fieldErrors: { username: 'invalid' } } });
 	});
 
 	it('requires email and username', async () => {

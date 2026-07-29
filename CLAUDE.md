@@ -173,6 +173,7 @@ ADMIN_USERNAME=            # Username des initialen Admin-Users (nur beim ersten
 - **Sprache:** Deutsch im UI, Englisch im Code (Variablen, Funktionen, Kommentare)
 - **Geteilte Domänen-Typen** liegen in `packages/shared` (`@dahamm/shared`), damit App, API-Endpunkte und Bot dieselbe Definition nutzen. Erster Typ: `ShoppingItem` – Einkaufslisten-Posten **ohne** Menge, nur `id`, `name`, `done`, `createdAt`. DB-Schema und API leiten davon ab.
   - **Domänen-Constraints als geteilte Konstanten** dort, nicht je Schicht dupliziert: `SHOPPING_ITEM_NAME_LENGTH = { min: 3, max: 64 }` ist die einzige Quelle für Web-UI (`maxlength`/Button-Freigabe), `/api/shopping`-Validierung und Bot. Die API-Spec verweist darauf, statt die Zahl zu wiederholen. Eine echte Schema-Validierung (Zod o. Ä.) kommt erst mit dem API-Endpoint – `shared` bleibt bis dahin dependency-frei.
+  - Nach demselben Muster liegen auch die Auth-Validierungs-Constraints dort: `EMAIL_LENGTH`/`EMAIL_REGEX` (+ Helper `isValidEmail()`), `USERNAME_RE`, `TELEGRAM_RE` – einzige Quelle für Login-Formular und Admin-Nutzerverwaltung, damit Client- und Server-Validierung nicht auseinanderdriften.
 - **Fehlerbehandlung:** Immer try/catch in Bot-Handlern, Nutzer bekommt lesbare Fehlermeldung
 - **Claude Haiku** für Intent-Parsing (günstig, schnell) – kein Sonnet für diese Aufgabe
 - **Kein Nx, kein Turborepo** – plain npm Workspaces reichen
