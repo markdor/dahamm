@@ -75,5 +75,11 @@ export function isValidEmail(value: string): boolean {
  */
 export const USERNAME_RE = /^[a-zA-Z0-9_.-]{2,40}$/;
 
-/** Regex für eine gültige Telegram-User-ID (rein numerisch; das Feld ist beim Anlegen optional). */
+/**
+ * Regex für eine gültige Telegram-User-ID (rein numerisch; das Feld ist beim Anlegen optional).
+ *
+ * Geteilte Validierungs-Constraint: aktuell nur von der Admin-Nutzerverwaltung
+ * genutzt, liegt aber zusammen mit den anderen Auth-Validierungs-Constraints hier
+ * – sobald der Bot dieselbe ID prüft, teilen sich beide Seiten diese Quelle.
+ */
 export const TELEGRAM_RE = /^\d{1,20}$/;
