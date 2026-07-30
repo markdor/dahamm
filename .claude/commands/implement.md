@@ -76,11 +76,25 @@ Nach Freigabe des Plans:
 
 ---
 
+## Phase 5.5 – Verifikation vor Abschluss (Pflicht, kein Angebot)
+
+Bevor der Skill **irgendein** Todo als `completed` markiert oder die Gesamtarbeit als getan betrachtet, **immer** – unabhängig davon, ob zuvor schon einzelne Test-Befehle manuell gelaufen sind:
+
+1. `npm run test:coverage`
+2. `npm run lint`
+3. `npm run test`
+
+Alle drei müssen grün sein. Schlägt einer fehl: Todo bleibt `in_progress`, Fehler beheben, alle drei erneut laufen lassen – erst danach gilt der Schritt als fertig. Diese drei Befehle sind kein optionales Angebot wie Commit/Push/PR in Phase 7, sondern eine feste Bedingung, die der Skill selbstständig prüft, ohne zu fragen.
+
+**Hintergrund:** `npm run test:coverage` prüft nur Unit-Tests + Coverage, `npm run test` deckt zusätzlich E2E ab – keiner der beiden läuft `npm run lint` (Prettier + ESLint) mit. Eine reine Text-/Format-Änderung kann trotz grüner Tests am CI-Lint-Job scheitern (Prettier-Zeilenumbruch-Regeln reagieren auf Textlänge). Ohne diesen expliziten Lint-Lauf bleibt das lokal unbemerkt und fällt erst in der GitHub-Actions-CI auf.
+
+---
+
 ## Phase 6 – Akzeptanzkriterien im Issue abhaken
 
 Sobald im weiteren Gesprächsverlauf ein Todo via `TodoWrite` als `completed` markiert wird, das laut Zuordnung aus Phase 4/5 mindestens ein Akzeptanzkriterium abdeckt:
 
-1. **Nur abhaken, wenn wirklich erfüllt**: Prüfe kurz, ob das Kriterium nach eigener Einschätzung vollständig umgesetzt ist (inkl. zugehöriger Tests, falls das Kriterium das verlangt). Im Zweifel ungecheckt lassen und dem User kurz mitteilen, warum – kein Abhaken auf Verdacht.
+1. **Nur abhaken, wenn wirklich erfüllt**: Voraussetzung ist immer, dass Phase 5.5 (alle drei Befehle grün) für diesen Stand bereits durchlaufen wurde. Prüfe zusätzlich kurz, ob das Kriterium inhaltlich vollständig umgesetzt ist. Im Zweifel ungecheckt lassen und dem User kurz mitteilen, warum – kein Abhaken auf Verdacht.
 2. **Aktuellen Issue-Body holen**: `gh issue view $ARGUMENTS --json body -q .body` – nicht den Stand aus Phase 1 wiederverwenden, falls der Issue-Body zwischenzeitlich extern geändert wurde.
 3. **Checkbox(en) umschalten**: In der Sektion „## Akzeptanzkriterien" die passende(n) Zeile(n) von `- [ ] ...` auf `- [x] ...` setzen, exakter Text der Zeile bleibt sonst unverändert. Alle anderen Sektionen unangetastet lassen.
 4. **Zurückschreiben**: `gh issue edit $ARGUMENTS --body-file -` mit dem aktualisierten Body über Stdin füttern (vermeidet Shell-Escaping-Probleme bei Markdown/Sonderzeichen).
@@ -92,7 +106,7 @@ Enthält der Issue-Body keine Checkbox-Sektion (z. B. weil `/refine` übersprung
 
 ## Phase 7 – Commit, Push & PR nach den ersten Edits
 
-Abweichend vom sonst im Projekt geltenden Grundsatz „nie committen/pushen" (siehe Grundsätze) darf **dieser Skill-Flow** nach einem sinnvollen ersten Zwischenstand aktiv anbieten, in einem Zug zu committen, zu pushen und einen PR anzulegen – z. B. wenn das erste Todo aus Phase 5 abgeschlossen ist. Immer nur als Angebot, nie automatisch ohne Zustimmung im Chat:
+Abweichend vom sonst im Projekt geltenden Grundsatz „nie committen/pushen" (siehe Grundsätze) darf **dieser Skill-Flow** nach einem sinnvollen ersten Zwischenstand aktiv anbieten, in einem Zug zu committen, zu pushen und einen PR anzulegen – z. B. wenn das erste Todo aus Phase 5 abgeschlossen ist. Voraussetzung ist immer, dass Phase 5.5 für den aktuellen Stand grün durchlaufen wurde – kein Commit/Push/PR-Angebot auf Basis eines Standes, der nicht durch alle drei Befehle verifiziert wurde. Immer nur als Angebot, nie automatisch ohne Zustimmung im Chat:
 
 1. **Commit**: `git add` der betroffenen Dateien + `git commit` mit sprechender Conventional-Commits-Message (Stil an bestehender Historie orientieren).
 2. **Push**: `git push -u origin <branch>` im selben Aufwasch.
@@ -111,4 +125,5 @@ Diese Ausnahme gilt **nur innerhalb von `/implement`** – außerhalb dieses Ski
 - **Keine Halluzinationen**: Nenne im Plan nur Dateien, die der Explore-Agent tatsächlich gefunden hat oder die laut Issue offensichtlich neu entstehen müssen.
 - **Commit/Push nur nach Zustimmung**: Phase 2 (Branch) committet nie von selbst. Ab Phase 7 darf nach den ersten Edits aktiv angeboten werden zu committen, zu pushen und den PR anzulegen – aber immer nur als Angebot, nie automatisch. Lehnt der User ab, committet er wie gewohnt selbst.
 - **Akzeptanzkriterien-Checkboxen laufen automatisch**: Anders als Commit/Push/PR braucht Phase 6 keine Zustimmung – Checkbox-Updates im Issue sind non-destruktiv und jederzeit reversibel.
+- **Verifikation vor „fertig"**: Kein Todo, keine Akzeptanzkriterium-Checkbox und kein Commit/Push/PR-Angebot ohne vorher grün durchlaufene Phase 5.5 (`npm run test:coverage`, `npm run lint`, `npm run test`) – manuell einzeln ausgeführte Einzelbefehle ersetzen das nicht, wenn `npm run lint` dabei fehlte.
 - **Kompakt**: Der Plan ist eine Anleitung, kein Aufsatz – Stichpunkte statt Fließtext, wo möglich.
