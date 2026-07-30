@@ -25,21 +25,29 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Unit Tests
+        id: coverage
         run: npm run test:coverage
 
       - name: Run E2E Tests
         run: npm run test:e2e
 
-      # Coverage-Report als Artefakt speichern
+      # Upload the coverage report as an artifact.
+      # if: always() so this still runs when "Run Unit Tests" fails the coverage
+      # threshold; skipped when that step never ran (e.g. an earlier Lint
+      # failure), since there is no report to upload then.
       - name: Upload Coverage Report
+        if: always() && steps.coverage.outcome != 'skipped'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: packages/app/coverage/
 
-      # Coverage-Summary direkt im PR/Action-Log
-      # Die App liegt im Workspace packages/app, daher dort nach Report + vite.config suchen.
+      # Coverage summary directly in the PR/Action log.
+      # The app lives in the packages/app workspace, so look there for the report + vite.config.
+      # if: always() so the PR comment still appears even when the coverage gate
+      # is red; skipped when "Run Unit Tests" never ran (e.g. an earlier Lint failure).
       - name: Coverage Summary
+        if: always() && steps.coverage.outcome != 'skipped'
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
