@@ -31,7 +31,10 @@ jobs:
         run: npm run test:e2e
 
       # Coverage-Report als Artefakt speichern
+      # if: always() – muss auch laufen, wenn "Run Unit Tests" wegen des
+      # Coverage-Thresholds fehlschlägt, sonst gibt es keinen Report/Kommentar.
       - name: Upload Coverage Report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
@@ -39,7 +42,9 @@ jobs:
 
       # Coverage-Summary direkt im PR/Action-Log
       # Die App liegt im Workspace packages/app, daher dort nach Report + vite.config suchen.
+      # if: always() – der PR-Kommentar soll auch bei rotem Coverage-Gate erscheinen.
       - name: Coverage Summary
+        if: always()
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

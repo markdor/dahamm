@@ -38,7 +38,13 @@ export default defineConfig({
 				'src/lib/server/db/index.ts',
 				'src/lib/server/logger.ts',
 				'src/lib/auth-client.ts'
-			]
+			],
+			thresholds: {
+				lines: 85,
+				statements: 85,
+				functions: 85,
+				branches: 85
+			}
 		},
 		expect: { requireAssertions: true },
 		projects: [
