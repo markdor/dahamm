@@ -4,8 +4,8 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 import { defineConfig } from 'eslint/config';
 
-// Schlankes TS-only-Lint-Setup für das geteilte Typen-Package – kein Svelte,
-// keine Browser-Globals. Spiegelt die relevanten Regeln aus packages/app.
+// Lean TS-only lint setup for the shared types package – no Svelte,
+// no browser globals. Mirrors the relevant rules from packages/app.
 export default defineConfig(
 	{ ignores: ['node_modules/'] },
 	js.configs.recommended,
@@ -17,9 +17,9 @@ export default defineConfig(
 			parserOptions: { tsconfigRootDir: import.meta.dirname }
 		},
 		rules: {
-			// typescript-eslint empfehlen, no-undef in TS-Projekten zu deaktivieren.
+			// typescript-eslint recommends disabling no-undef in TS projects.
 			'no-undef': 'off',
-			// Bewusst ungenutzte Bezeichner mit `_`-Präfix erlauben.
+			// Allow deliberately unused identifiers with a `_` prefix.
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{

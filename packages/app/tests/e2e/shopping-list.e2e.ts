@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Eindeutige Namen pro Lauf, falls die Test-DB nicht zwischen zwei lokalen
-// Wiederholungen neu aufgesetzt wird.
+// Unique names per run, in case the test DB isn't reset between two local
+// repeated runs.
 const suffix = Date.now();
 const ITEM_DONE = `Milch ${suffix}`;
 const ITEM_OPEN = `Brot ${suffix}`;
@@ -25,18 +25,18 @@ test.describe('Einkaufsliste – QuickAdd', () => {
 
 		await page.getByRole('button', { name: `${ITEM_DONE} abhaken` }).click();
 
-		// Sofort durchgestrichen, aber wegen der Gnadenfrist (2s) noch nicht weg.
+		// Struck through immediately, but not gone yet due to the grace period (2s).
 		await expect(
 			page.getByRole('button', { name: `${ITEM_DONE} doch nicht abhaken` })
 		).toBeVisible();
 		await expect(page.getByText(ITEM_DONE, { exact: true })).toHaveClass(/line-through/);
 
-		// Nach Ablauf der Gnadenfrist verschwindet der abgehakte Posten ganz.
+		// Once the grace period expires, the checked-off item disappears entirely.
 		await expect(page.getByRole('button', { name: `${ITEM_DONE} doch nicht abhaken` })).toBeHidden({
 			timeout: 3000
 		});
 
-		// Der nicht abgehakte Posten bleibt unverändert sichtbar.
+		// The unchecked item remains visible unchanged.
 		await expect(page.getByRole('button', { name: `${ITEM_OPEN} abhaken` })).toBeVisible();
 	});
 });

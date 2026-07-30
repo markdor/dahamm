@@ -13,24 +13,24 @@ test.describe('Magic-Link-Login', () => {
 	}) => {
 		expect(baseURL).toBeTruthy();
 
-		// Closed app: ein nicht eingeloggter Aufruf von / landet auf /login.
+		// Closed app: an unauthenticated call to / lands on /login.
 		await page.goto('/');
 		await expect(page).toHaveURL(/\/login$/);
 
-		// Mailadresse eingeben und Link anfordern.
+		// Enter email address and request the link.
 		await page.getByLabel('E-Mail').fill(E2E_ADMIN_EMAIL);
 		const linesBefore = countMagicLinkLines();
 		await page.getByRole('button', { name: 'Link anfordern' }).click();
 
-		// Immer dieselbe (neutrale) Bestätigung – egal ob Whitelist-Hit oder -Miss.
+		// Always the same (neutral) confirmation – regardless of whitelist hit or miss.
 		await expect(page.getByRole('status')).toContainText(/wurde ein Link verschickt/i);
 
-		// Link aufrufen -> Session-Cookie gesetzt, Redirect aufs Dashboard.
+		// Follow the link -> session cookie set, redirect to the dashboard.
 		const magicLink = await waitForNewMagicLink(linesBefore);
 		await page.goto(magicLink);
 		await expect(page).toHaveURL(new URL('/', baseURL!).toString());
 
-		// Begrüßungsseite prüft Username im Header und in der Überschrift.
+		// Greeting page checks the username in the header and in the heading.
 		await expect(page.getByRole('heading', { name: /Hallo admin/i })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'admin' })).toBeVisible();
 	});

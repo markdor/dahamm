@@ -1,7 +1,7 @@
-// Schreibt eine Version in alle Workspace-package.json-Dateien des Monorepos.
-// Aufruf: node scripts/sync-workspace-versions.mjs <version>
-// Wird von semantic-release (@semantic-release/exec, prepare) mit der neuen
-// Release-Version aufgerufen, damit z. B. die App ihre Version anzeigen kann.
+// Writes a version into all workspace package.json files of the monorepo.
+// Usage: node scripts/sync-workspace-versions.mjs <version>
+// Called by semantic-release (@semantic-release/exec, prepare) with the new
+// release version, so e.g. the app can display its version.
 
 import { globSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
