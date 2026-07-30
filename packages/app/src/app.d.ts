@@ -14,7 +14,7 @@ declare global {
 		// interface Platform {}
 	}
 
-	// Injected at build time via Vite `define` (siehe vite.config.ts).
+	// Injected at build time via Vite `define` (see vite.config.ts).
 	const __APP_VERSION__: string;
 }
 

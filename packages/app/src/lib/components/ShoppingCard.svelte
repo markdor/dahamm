@@ -7,22 +7,22 @@
 	import type { ShoppingItem } from '@dahamm/shared';
 	import { toastActionFailure } from './actionToast';
 
-	// removeDelayMs ist als Prop herausgezogen, damit Tests die Gnadenfrist
-	// verkürzen können – in der App bleibt es bei 2 Sekunden.
+	// removeDelayMs is pulled out as a prop so tests can shorten the grace
+	// period – in the app it stays at 2 seconds.
 	let { items, removeDelayMs = 2000 }: { items: ShoppingItem[]; removeDelayMs?: number } = $props();
 
-	// Wie viele offene Posten die Karte als Vorschau zeigt (Rest als „+ N weitere").
+	// How many open items the card shows as a preview (rest as "+ N more").
 	const PREVIEW_LIMIT = 4;
 
-	// Abgehakte Posten in der Gnadenfrist: durchgestrichen sichtbar, noch NICHT in
-	// der DB gespeichert. id → Timer-Handle, damit ein zweiter Klick (Undo) den
-	// Timer abbrechen kann. Wird der Posten nie gespeichert, bleibt er offen.
+	// Checked-off items within the grace period: shown struck through, NOT YET
+	// persisted to the DB. id → timer handle, so a second click (undo) can
+	// cancel the timer. If the item is never persisted, it stays open.
 	const pending = new SvelteMap<string, ReturnType<typeof setTimeout>>();
-	// Frist abgelaufen, DB-Schreibvorgang läuft – nicht mehr abbrechbar.
+	// Grace period expired, DB write in progress – no longer cancelable.
 	const committing = new SvelteSet<string>();
-	// Erfolgreich gespeichert → komplett aus der Anzeige raus.
+	// Successfully persisted → removed from the display entirely.
 	const hidden = new SvelteSet<string>();
-	// Referenzen auf die versteckten Persist-Forms (ein Form pro Posten).
+	// References to the hidden persist forms (one form per item).
 	let forms = $state<Record<string, HTMLFormElement | null>>({});
 
 	const live = $derived(items.filter((item) => !hidden.has(item.id)));
@@ -33,10 +33,10 @@
 		return pending.has(id) || committing.has(id);
 	}
 
-	// Klick auf die Box: erst durchstreichen + Frist starten; zweiter Klick
-	// innerhalb der Frist macht das Abhaken rückgängig (kein DB-Schreibvorgang).
+	// Click on the box: first strike through + start the grace period; a
+	// second click within the period undoes the checkmark (no DB write).
 	function toggle(id: string) {
-		if (committing.has(id)) return; // Schreibvorgang läuft schon – ignorieren
+		if (committing.has(id)) return; // Write already in progress – ignore
 
 		const timer = pending.get(id);
 		if (timer !== undefined) {
@@ -50,7 +50,7 @@
 			setTimeout(() => {
 				pending.delete(id);
 				committing.add(id);
-				// Jetzt erst wirklich speichern; das Form-Submit läuft über enhance.
+				// Only now actually persist; the form submit runs through enhance.
 				forms[id]?.requestSubmit();
 			}, removeDelayMs)
 		);
@@ -64,7 +64,7 @@
 					hidden.add(id);
 					invalidateAll();
 				} else {
-					// Bei Fehler kein hidden/pending → der Posten erscheint wieder offen.
+					// On error no hidden/pending → the item shows as open again.
 					toastActionFailure(
 						result,
 						'Eintrag konnte nicht gespeichert werden. Bitte versuche es erneut.'
@@ -126,7 +126,7 @@
 						</span>
 					</button>
 
-					<!-- Versteckt: persistiert das Abhaken erst nach Ablauf der Frist. -->
+					<!-- Hidden: persists the checkmark only after the grace period expires. -->
 					<form
 						bind:this={forms[item.id]}
 						method="POST"

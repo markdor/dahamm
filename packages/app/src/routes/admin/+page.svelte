@@ -49,7 +49,7 @@
 <main class="mx-auto max-w-3xl space-y-10 px-4 py-8">
 	<h1 class="text-2xl font-semibold tracking-tight">Admin</h1>
 
-	<!-- ── Bot-Token ─────────────────────────────────────────────── -->
+	<!-- ── Bot Token ─────────────────────────────────────────────── -->
 	<section class="space-y-4">
 		<h2 class="text-lg font-semibold">Bot-Token</h2>
 
@@ -110,7 +110,7 @@
 		</div>
 	</section>
 
-	<!-- ── Benutzer anlegen ──────────────────────────────────────── -->
+	<!-- ── Create user ───────────────────────────────────────────── -->
 	<section class="space-y-4">
 		<h2 class="text-lg font-semibold">Benutzer anlegen</h2>
 
@@ -184,7 +184,7 @@
 		</form>
 	</section>
 
-	<!-- ── Benutzerliste ─────────────────────────────────────────── -->
+	<!-- ── User list ─────────────────────────────────────────────── -->
 	<section class="space-y-4">
 		<h2 class="text-lg font-semibold">Benutzer ({data.users.length})</h2>
 
@@ -192,7 +192,7 @@
 			{#each data.users as u (u.id)}
 				<li class="rounded-xl border border-slate-200 bg-white p-4">
 					{#if editingId === u.id}
-						<!-- Inline-Bearbeitung -->
+						<!-- Inline editing -->
 						<form
 							method="POST"
 							action="?/update"
@@ -266,7 +266,7 @@
 							</div>
 						</form>
 					{:else}
-						<!-- Anzeige -->
+						<!-- Display -->
 						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0">
 								<p class="flex items-center gap-2 font-medium">

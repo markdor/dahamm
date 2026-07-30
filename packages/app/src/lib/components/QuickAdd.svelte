@@ -4,15 +4,15 @@
 	import { QUICK_ADD_TARGETS, SHOPPING_ITEM_NAME_LENGTH } from '@dahamm/shared';
 	import { toastActionFailure } from './actionToast';
 
-	// Globales Schnell-Hinzufügen auf dem Dashboard.
-	// Ein Icon vor dem Eingabefeld zeigt das aktuell gewählte Ziel und öffnet
-	// per Klick ein Dropdown zur Zieländerung (ändert nur den State, postet
-	// nichts). Der „+"-Button (und Enter) postet direkt an das aktuell
-	// gewählte Ziel.
+	// Global quick-add on the dashboard.
+	// An icon in front of the input field shows the currently selected target
+	// and opens a dropdown on click to change the target (only changes state,
+	// posts nothing). The "+" button (and Enter) posts directly to the
+	// currently selected target.
 
-	// Eingabe-Constraints aus der geteilten Domänen-Definition: mind. 3 Zeichen
-	// (getrimmt), damit der „+"-Button aktiv wird; max. 64 Zeichen (auch hart per
-	// maxlength am Input erzwungen).
+	// Input constraints from the shared domain definition: at least 3
+	// characters (trimmed) for the "+" button to become active; max. 64
+	// characters (also hard-enforced via maxlength on the input).
 	const { min: MIN_LENGTH, max: MAX_LENGTH } = SHOPPING_ITEM_NAME_LENGTH;
 
 	let open = $state(false);
@@ -40,8 +40,8 @@
 					'Eintrag konnte nicht hinzugefügt werden. Bitte versuche es erneut.'
 				);
 			}
-			// reset:false – wir leeren das Feld selbst; update() lädt die Daten neu,
-			// damit die Karte den frischen Posten zeigt.
+			// reset:false – we clear the field ourselves; update() reloads the data
+			// so the card shows the fresh item.
 			await update({ reset: false });
 		};
 	}}
