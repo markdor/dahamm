@@ -140,7 +140,8 @@
 					{/if}
 				</div>
 				<div class="space-y-1">
-					<label for="c-username" class="block text-sm font-medium text-slate-700">Username *</label
+					<label for="c-username" class="block text-sm font-medium text-slate-700"
+						>Benutzername *</label
 					>
 					<input
 						id="c-username"

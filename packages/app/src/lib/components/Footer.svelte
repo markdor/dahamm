@@ -12,6 +12,6 @@
 		>
 			v{version}
 		</a>
-		<span>Made with <span role="img" aria-label="Liebe">❤️</span></span>
+		<span>Gemacht mit <span role="img" aria-label="Liebe">❤️</span></span>
 	</div>
 </footer>

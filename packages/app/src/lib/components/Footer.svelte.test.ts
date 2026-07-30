@@ -26,10 +26,10 @@ describe('Footer', () => {
 		await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer');
 	});
 
-	test('shows the "Made with" note', async () => {
+	test('shows the "Gemacht mit" note', async () => {
 		render(Footer);
 
-		await expect.element(page.getByText(/Made with/)).toBeVisible();
+		await expect.element(page.getByText(/Gemacht mit/)).toBeVisible();
 		await expect.element(page.getByRole('img', { name: 'Liebe' })).toBeVisible();
 	});
 });
