@@ -19,7 +19,7 @@ export const SHOPPING_ITEM_NAME_LENGTH = {
  * sides share the same definition.
  *
  * Deliberately **without** a quantity – the family only checks items off;
- * a quantity is simply written into the name when needed ("2x Milk").
+ * a quantity is simply written into the name when needed ("2x Milch").
  */
 export interface ShoppingItem {
 	id: string;
