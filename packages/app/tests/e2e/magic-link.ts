@@ -13,6 +13,12 @@ export const MAGIC_LINK_FILE = isContainerRun
 
 export const E2E_ADMIN_EMAIL = 'admin@e2e.test';
 
+// Must match the relaxed `emailRateLimit` override in src/lib/server/auth.ts,
+// which only applies while MAGIC_LINK_DEBUG_PATH is set (i.e. in e2e runs).
+// Duplicated rather than imported: these tests talk to the app strictly as a
+// black box over HTTP and the capture file, never via its server modules.
+export const MAGIC_LINK_EMAIL_TEST_LIMIT = 20;
+
 function readMagicLinkLines(): string[] {
 	if (!existsSync(MAGIC_LINK_FILE)) return [];
 	return readFileSync(MAGIC_LINK_FILE, 'utf8')

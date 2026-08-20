@@ -240,6 +240,17 @@ Aufbau analog zu `C:\Users\Markus\git\gritshot`.
   - **Ein geteilter Admin-Account** für alle E2E-Tests (kein Per-Worker-Isolation-Setup). Ausreichend, solange E2E auf wenige Smoke-/Critical-Path-Tests beschränkt bleibt; Per-Worker-Accounts erst nötig, falls parallel laufende Tests sich gegenseitig über geteilten Server-State stören.
   - Tests, die explizit unauthentifiziert starten müssen (Closed-App-Guard, der Login-Flow selbst), resetten den State lokal mit `test.use({ storageState: { cookies: [], origins: [] } })`.
   - Tokens werden gehasht gespeichert, das Klartext-Magic-Link landet nur in der `MAGIC_LINK_DEBUG_PATH`-Capture-Datei (Test-Seam, siehe `auth.ts`). Lokal (`test:e2e`, Vite Preview) liegt diese Datei direkt auf dem Host. Gegen den Container (`docker:test`) macht `compose.e2e.yaml` sie per Bind-Mount host-sichtbar und isoliert den Lauf zusätzlich auf ein eigenes DB-Volume (`dahamm-data-e2e`, vor jedem Lauf per `down -v` geleert) statt der echten Dev-Volume `dahamm-data`.
+  - Derselbe `MAGIC_LINK_DEBUG_PATH`-Schalter lockert in `auth.ts` beide Rate-Limits, weil ein lokaler Preview-/Docker-Lauf keine echte Client-IP hat und alle Requests im selben Bucket landen. **Asymmetrisch bewusst gewählt:** der Pro-IP-Limiter geht auf `max: 1000` (soll im Test nie greifen), der Pro-Mail-Limiter nur auf `max: 20` – niedrig genug, dass ein E2E-Fall ihn mit echten Requests ausschöpfen und das Über-Quota-Verhalten prüfen kann. Der Wert ist in `tests/e2e/magic-link.ts` als `MAGIC_LINK_EMAIL_TEST_LIMIT` gespiegelt (bewusste Duplikation: E2E-Tests importieren grundsätzlich keine Server-Module) – beide Stellen zusammen ändern.
+  - Der Rate-Limit-E2E-Fall verbrennt das Kontingent des geteilten Admin-Accounts und muss deshalb der **letzte Test in `auth-login.e2e.ts`** bleiben (Playwright führt Tests innerhalb einer Datei seriell aus; `fullyParallel` ist bewusst nicht gesetzt).
+
+### Magic-Link-Callback (Enumeration-Schutz)
+
+- Die sicherheitskritische Logik hinter `sendMagicLink` liegt **nicht** in `auth.ts`, sondern als `handleSendMagicLink()` in `src/lib/server/magicLinkCallback.ts`. Grund: `auth.ts` ist reine Wiring-/Config-Datei und steht in `coverage.exclude`; der ausgelagerte Callback fällt dagegen unter das 85 %-Gate.
+- Alle Abhängigkeiten (DB, Throttle-Funktion, Mailer, `dev`, `magicLinkDebugPath`, Logger, File-Writer) kommen als `MagicLinkCallbackDeps`-Objekt herein statt aus dem Modul-Scope. Erste Stelle im Projekt mit einem Deps-Objekt statt einzelner Positions-Parameter – ab ~8 Abhängigkeiten sonst nicht mehr lesbar; bei 2–4 bleibt das bisherige Muster (`consumeEmailRateLimit(db, email, opts, now)`) die Vorgabe.
+- Drei Eigenschaften sind Sicherheitsverhalten, kein Zufall, und je durch einen Unit-Test abgesichert (beide Regressionswächter wurden per Mutation verifiziert):
+  - **Fire-and-forget:** kein `await` vor `sendMagicLinkMail(...)`, sonst leakt die SMTP-Latenz die Whitelist-Zugehörigkeit. Test hält das Mailer-Promise offen und prüft, dass der Callback vorher resolved.
+  - **Branch-Reihenfolge:** `consumeEmailRateLimit` läuft vor dem Whitelist-Check, damit auch ein Miss Kontingent verbraucht und Enumeration nicht gratis ist.
+  - **Whitelist-Miss und Rate-Limit-Miss** führen zu identischem Verhalten (kein Mailversand, unveränderte Response).
 
 ### GitHub Actions (`.github/workflows/ci.yml`)
 
