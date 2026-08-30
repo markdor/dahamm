@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, lt } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { SHOPPING_ITEM_NAME_LENGTH, type ShoppingItem } from '@dahamm/shared';
@@ -39,11 +39,8 @@ export function listOpenShoppingItems(db: Db): ShoppingItem[] {
 		.map(toDomain);
 }
 
-/**
- * Creates a new open item from raw user input. Trims the name and enforces the
- * shared length bounds; throws {@link ShoppingItemValidationError} otherwise.
- */
-export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
+// Shared by create and rename – both enforce the same trimmed length bounds.
+function validateName(rawName: string): string {
 	const name = rawName.trim();
 	const { min, max } = SHOPPING_ITEM_NAME_LENGTH;
 	if (name.length < min || name.length > max) {
@@ -52,7 +49,15 @@ export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
 			`Der Name muss zwischen ${min} und ${max} Zeichen lang sein.`
 		);
 	}
+	return name;
+}
 
+/**
+ * Creates a new open item from raw user input. Trims the name and enforces the
+ * shared length bounds; throws {@link ShoppingItemValidationError} otherwise.
+ */
+export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
+	const name = validateName(rawName);
 	const row: ShoppingItemRow = { id: randomUUID(), name, done: false, createdAt: new Date() };
 	db.insert(shoppingItem).values(row).run();
 	return toDomain(row);
@@ -64,4 +69,54 @@ export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
  */
 export function completeShoppingItem(db: Db, id: string): void {
 	db.update(shoppingItem).set({ done: true }).where(eq(shoppingItem.id, id)).run();
+}
+
+/**
+ * Reopens a done item. Mirror of {@link completeShoppingItem}: idempotent and
+ * silent if the id is unknown.
+ */
+export function uncompleteShoppingItem(db: Db, id: string): void {
+	db.update(shoppingItem).set({ done: false }).where(eq(shoppingItem.id, id)).run();
+}
+
+/**
+ * Renames an existing item. Enforces the same length bounds as
+ * {@link createShoppingItem}; throws {@link ShoppingItemValidationError}
+ * otherwise. Silent no-op if the id is unknown.
+ */
+export function renameShoppingItem(db: Db, id: string, rawName: string): void {
+	const name = validateName(rawName);
+	db.update(shoppingItem).set({ name }).where(eq(shoppingItem.id, id)).run();
+}
+
+/**
+ * Done items, newest first, keyset-paginated over `createdAt` (no OFFSET scan
+ * – stable even while more items are being completed during pagination).
+ * `cursor` is the `createdAt` of the last item from the previous page.
+ */
+export function listDoneShoppingItems(
+	db: Db,
+	{ limit, cursor }: { limit: number; cursor?: Date }
+): ShoppingItem[] {
+	const condition = cursor
+		? and(eq(shoppingItem.done, true), lt(shoppingItem.createdAt, cursor))
+		: eq(shoppingItem.done, true);
+	return db
+		.select()
+		.from(shoppingItem)
+		.where(condition)
+		.orderBy(desc(shoppingItem.createdAt))
+		.limit(limit)
+		.all()
+		.map(toDomain);
+}
+
+/** Total number of done items, regardless of how many are currently loaded. */
+export function countDoneShoppingItems(db: Db): number {
+	const row = db
+		.select({ value: count() })
+		.from(shoppingItem)
+		.where(eq(shoppingItem.done, true))
+		.get();
+	return row?.value ?? 0;
 }
