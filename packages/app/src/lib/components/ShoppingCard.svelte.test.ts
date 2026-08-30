@@ -6,6 +6,7 @@ import ShoppingCard from './ShoppingCard.svelte';
 import { toast } from './toastStore.svelte';
 
 const invalidateAll = vi.fn();
+const goto = vi.fn();
 
 // Stub the persist path: enhance reports the (hidden) form submit as a success,
 // so we can observe the item being removed after the grace period without a
@@ -19,7 +20,10 @@ type PersistResult = { type: string; data?: Record<string, unknown> };
 let holdCallbacks = false;
 let heldCallbacks: Array<(opts: { result: PersistResult }) => unknown> = [];
 
-vi.mock('$app/navigation', () => ({ invalidateAll: () => invalidateAll() }));
+vi.mock('$app/navigation', () => ({
+	invalidateAll: () => invalidateAll(),
+	goto: (url: string) => goto(url)
+}));
 vi.mock('$app/forms', () => ({
 	enhance: (form: HTMLFormElement, submit: () => (opts: { result: PersistResult }) => unknown) => {
 		const handler = (event: Event) => {
@@ -43,6 +47,7 @@ function item(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
 beforeEach(() => {
 	holdCallbacks = false;
 	heldCallbacks = [];
+	goto.mockClear();
 	for (const t of [...toast.toasts]) toast.dismiss(t.id);
 });
 
@@ -173,5 +178,19 @@ describe('ShoppingCard', () => {
 				(t) => t.variant === 'error' && t.message === 'Eintrag ist bereits erledigt.'
 			)
 		).toBe(true);
+	});
+
+	test('navigates to the detail page when the card is clicked', async () => {
+		render(ShoppingCard, { items: [item('Milch')] });
+
+		await page.getByRole('link', { name: 'Zur Einkaufsliste' }).click();
+		expect(goto).toHaveBeenCalledWith('/shopping');
+	});
+
+	test('does not navigate when a checkbox is clicked', async () => {
+		render(ShoppingCard, { items: [item('Milch')], removeDelayMs: 10_000 });
+
+		await page.getByRole('button', { name: 'Milch abhaken' }).click();
+		expect(goto).not.toHaveBeenCalled();
 	});
 });

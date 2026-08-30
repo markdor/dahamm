@@ -72,6 +72,16 @@ Docker Compose, deployed auf Hetzner VPS hinter Traefik v3.
 
 Referenz-Mockup (heller Modus, Eukalyptus): ![Dahamm Dashboard Mockup](docs/ui/dashboard-mockup.png)
 
+### Einkaufsliste-Detailseite (`/shopping`)
+
+Vollbild-Ansicht der Einkaufsliste, erreichbar per Klick auf die Dashboard-Card (`ShoppingCard.svelte`).
+
+- **Zwei lokale Listen statt `invalidateAll()`**: Die Seite hält `openItems`/`doneItems` als eigene `$state`-Arrays (initial aus `load()` bzw. lazy aus der `loadMoreDone`-Action befüllt) statt sich nach jedem Toggle per `invalidateAll()` neu vom Server laden zu lassen. Grund: Beim Abhaken/Wiedereröffnen soll der Posten **live** in die jeweils andere Liste wandern (sortiert nach `createdAt` eingefügt), auch wenn diese gerade sichtbar ist – ein reiner Reload der offenen Liste (wie bei `ShoppingCard.svelte`) würde die bereits geladene, paginierte erledigte Liste nicht mitaktualisieren.
+  - **Kante:** Ein live eingefügter Posten kann einen `createdAt`-Wert unterhalb des aktuellen Keyset-Cursors der erledigten Liste haben. Eine spätere „Mehr laden"-Seite dedupliziert deshalb per `id`, bevor sie angehängt wird.
+- **Gnadenfrist-Logik gespiegelt, nicht extrahiert**: Das Pending/Committing-Pattern aus `ShoppingCard.svelte` (`SvelteMap`/`SvelteSet` + verstecktes Form + `use:enhance`) ist in `+page.svelte` dupliziert und um die Wiedereröffnen-Richtung erweitert, statt in eine gemeinsame Komposable ausgelagert zu werden – kein Präzedenzfall dafür im Projekt, und die neue Seite braucht ohnehin Zusatzlogik (zwei Listen, zwei Richtungen).
+- **`graceDelay.ts` als Test-Seam**: Die 2s-Gnadenfrist steckt nicht in einer Prop (wie `ShoppingCard.svelte`s `removeDelayMs`), weil Routen-Komponenten laut `svelte/valid-prop-names-in-kit-pages` nur die SvelteKit-eigenen Props (`data`/`form`) akzeptieren dürfen. Stattdessen ein eigenes Modul mit `getGraceDelayMs()`/`setGraceDelayMsForTests()`, analog zum `MAGIC_LINK_DEBUG_PATH`-Seam in `auth.ts`.
+- **Karten-Klick vs. Checkbox-Klick**: `ShoppingCard.svelte` ist dafür ein klickbares `<div role="link">` (kein `<section>` – löst sonst den A11y-Lint `a11y_no_noninteractive_element_to_interactive_role` aus), Checkbox-Buttons rufen `event.stopPropagation()`. **Für E2E-/UI-Tests wichtig:** Ein Klick auf die Karten-Mitte (Playwright-Default) kann bei genügend offenen Posten geometrisch auf einer Checkbox statt auf dem Kartenhintergrund landen und dadurch die Navigation über `stopPropagation()` verschlucken – Tests klicken deshalb gezielt auf die Kartenüberschrift statt auf die Card als Ganzes.
+
 ### Toast / Status-Hinweise
 
 - Globale Komponente `src/lib/components/Toast.svelte` + Store `src/lib/components/toastStore.svelte.ts` (`toast.show(variant, message, durationMs?)`), einmalig in `+layout.svelte` gemountet – einzige Quelle für kurzzeitige Status-Hinweise (Error/Success/Info), löst alle Ad-hoc-Boxen ab.

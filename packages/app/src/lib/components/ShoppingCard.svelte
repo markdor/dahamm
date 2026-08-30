@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Check, ShoppingCart } from '@lucide/svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -31,6 +32,20 @@
 
 	function isStruck(id: string): boolean {
 		return pending.has(id) || committing.has(id);
+	}
+
+	function navigateToDetail() {
+		goto(resolve('/shopping'));
+	}
+
+	// Card is clickable as a whole to navigate to the detail page, except for
+	// the per-item checkbox buttons – their clicks stop propagation below so
+	// checking an item off never triggers navigation.
+	function onDetailKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			navigateToDetail();
+		}
 	}
 
 	// Click on the box: first strike through + start the grace period; a
@@ -74,7 +89,14 @@
 	}
 </script>
 
-<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+<div
+	role="link"
+	tabindex="0"
+	aria-label="Zur Einkaufsliste"
+	onclick={navigateToDetail}
+	onkeydown={onDetailKeydown}
+	class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+>
 	<header class="flex items-center gap-3">
 		<span
 			class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
@@ -99,7 +121,10 @@
 				<li>
 					<button
 						type="button"
-						onclick={() => toggle(item.id)}
+						onclick={(e) => {
+							e.stopPropagation();
+							toggle(item.id);
+						}}
 						aria-pressed={struck}
 						aria-label={struck ? `${item.name} doch nicht abhaken` : `${item.name} abhaken`}
 						class="flex w-full items-center gap-3 rounded-lg py-1.5 text-left transition-colors hover:bg-slate-50"
@@ -144,4 +169,4 @@
 			<p class="mt-3 pl-8 text-sm font-medium text-slate-500">+ {remaining} weitere</p>
 		{/if}
 	{/if}
-</section>
+</div>
