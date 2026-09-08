@@ -97,6 +97,7 @@ Vollbild-Ansicht der Einkaufsliste, erreichbar per Klick auf die Dashboard-Card 
   - Implementierung als globaler Auth-Guard in `hooks.server.ts`: Session prüfen, sonst `throw redirect(302, '/login')`.
   - Die Login-Seite ist die de-facto-Startseite für nicht eingeloggte User; nach erfolgreichem Login geht es auf `/` (Dashboard).
   - **Ausnahme `/api/*`**: kein Redirect, sondern Bearer-Token-Check gegen den Bot-Token (siehe unten). Kein/ungültiger Token → `401 Unauthorized`.
+  - **Ausnahme `/health`**: rein technischer Liveness-Check (Docker-Healthcheck, siehe Compose-Konventionen) – öffentlich wie `/login`/`/auth/*`, kein Redirect, kein Bearer-Token. Response bleibt bewusst leer/status-only (kein Stacktrace, keine Versions-/Config-Details), da der Pfad ungeschützt erreichbar ist.
 - Im Header (nur sichtbar für eingeloggte User) steht der Username als Drop-Down-Trigger: "Logout" und – falls Admin – zusätzlich "Admin".
 - Der Login erfolgt via Angabe der Mailadresse an die dann ein Magic Link geschickt wird.
 - Eine Registrierung im herkömmlichen Sinne gibt es nicht – Initial ist nur der `.env`-Admin freigeschaltet, weitere User legt der Admin manuell an.
@@ -229,7 +230,17 @@ Netzwerk und Traefik). Konkret:
     - "traefik.http.services.dahamm.loadbalancer.server.port=3000"
     ```
 - **Healthchecks** für Services, von denen andere abhängen (z. B. `whisper`,
-  damit `bot` erst startet, wenn STT bereit ist).
+  damit `bot` erst startet, wenn STT bereit ist). Der `app`-Service hat davon
+  unabhängig bereits einen eigenen Healthcheck (`GET /health`, siehe
+  Authentifizierung) für Docker-Sichtbarkeit und künftige `depends_on`-Nutzung.
+  - **Command ohne curl/wget**: Die Runtime-Stage im `Dockerfile` ist
+    `node:24-slim` (Debian) ohne `curl`/`wget` – ein Zusatzpaket nur für den
+    Healthcheck wäre unnötiger Image-Bloat. Stattdessen Node-eigenes,
+    globales `fetch` per `node -e "fetch(...).then(...).catch(...)"`.
+    `127.0.0.1` statt `localhost` in der URL, da Node `localhost` je nach
+    Resolver zuerst zu `::1` (IPv6) auflösen kann, während der Server nur auf
+    `0.0.0.0`/IPv4 lauscht – Vorbild für künftige Node-basierte Services
+    (`bot`, `whisper`) auf ähnlich schlanken Images.
 - `bot` und `whisper` hängen **nur** im `dahamm-internal`-Netzwerk, nicht in `web`.
 
 ---

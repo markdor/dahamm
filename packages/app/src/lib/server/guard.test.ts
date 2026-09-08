@@ -30,6 +30,12 @@ describe('evaluateGuard', () => {
 			});
 		});
 
+		it('lets unauthenticated requests reach /health (container healthcheck)', () => {
+			expect(evaluateGuard('/health', { authenticated: false, bearerAuthorized: false })).toEqual({
+				action: 'resolve'
+			});
+		});
+
 		it('lets Better Auth endpoints through', () => {
 			expect(
 				evaluateGuard('/auth/sign-in/magic-link', { authenticated: false, bearerAuthorized: false })
@@ -50,6 +56,12 @@ describe('evaluateGuard', () => {
 				action: 'redirect',
 				location: '/login'
 			});
+		});
+
+		it('does not treat /healthcheck as the public /health path', () => {
+			expect(
+				evaluateGuard('/healthcheck', { authenticated: false, bearerAuthorized: false })
+			).toEqual({ action: 'redirect', location: '/login' });
 		});
 
 		it('does not treat /apidocs as the bot surface', () => {
