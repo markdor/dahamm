@@ -23,16 +23,17 @@ export function isApiPath(pathname: string): boolean {
 
 /**
  * Pure decision for the global auth guard (see hooks.server.ts):
- *   - /api/*          → bot surface, needs a valid bearer token (401 otherwise)
- *   - /login, /auth/* → public (login page + Better Auth endpoints)
- *   - everything else → requires a session, else redirect to /login
+ *   - /api/*                   → bot surface, needs a valid bearer token (401 otherwise)
+ *   - /login, /health, /auth/* → public (login page, container healthcheck + Better Auth endpoints)
+ *   - everything else          → requires a session, else redirect to /login
  */
 export function evaluateGuard(pathname: string, ctx: GuardContext): GuardDecision {
 	if (isApiPath(pathname)) {
 		return ctx.bearerAuthorized ? { action: 'resolve' } : { action: 'unauthorized' };
 	}
 
-	const isPublic = pathname === '/login' || underPrefix(pathname, '/auth');
+	const isPublic =
+		pathname === '/login' || pathname === '/health' || underPrefix(pathname, '/auth');
 	if (!isPublic && !ctx.authenticated) {
 		return { action: 'redirect', location: '/login' };
 	}
