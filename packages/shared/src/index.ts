@@ -29,6 +29,8 @@ export interface ShoppingItem {
 	done: boolean;
 	/** Creation timestamp as an ISO string, for stable sorting of the preview. */
 	createdAt: string;
+	/** Completion timestamp as an ISO string, `null` while open. Sort key for the "erledigt" list. */
+	completedAt: string | null;
 }
 
 /** A target the dashboard quick-add can post an entry to. */

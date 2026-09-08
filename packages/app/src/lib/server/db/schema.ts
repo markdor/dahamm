@@ -94,7 +94,10 @@ export const shoppingItem = sqliteTable('shopping_item', {
 	// Millisecond precision so „newest first" stays deterministic even when
 	// several items are added within the same second (e.g. a bot batch from one
 	// message). SQL column stays `integer` – this only changes Date ↔ int scaling.
-	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
+	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+	// Null while open. Set when checked off, cleared on reopen – the sort key
+	// for the "erledigt" list (completion order, not creation order).
+	completedAt: integer('completed_at', { mode: 'timestamp_ms' })
 });
 
 export type User = typeof user.$inferSelect;
