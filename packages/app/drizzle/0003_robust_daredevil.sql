@@ -1,0 +1,1 @@
+ALTER TABLE `shopping_item` ADD `completed_at` integer;

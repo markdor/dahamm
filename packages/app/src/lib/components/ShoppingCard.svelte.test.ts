@@ -41,7 +41,14 @@ vi.mock('$app/forms', () => ({
 }));
 
 function item(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
-	return { id: name, name, done: false, createdAt: '2026-06-25T07:00:00.000Z', ...over };
+	return {
+		id: name,
+		name,
+		done: false,
+		createdAt: '2026-06-25T07:00:00.000Z',
+		completedAt: null,
+		...over
+	};
 }
 
 beforeEach(() => {

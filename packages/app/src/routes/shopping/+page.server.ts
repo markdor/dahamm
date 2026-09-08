@@ -102,7 +102,8 @@ export const actions: Actions = {
 			const page = listDoneShoppingItems(db, { limit: DONE_PAGE_SIZE + 1, cursor });
 			const hasMore = page.length > DONE_PAGE_SIZE;
 			const items = hasMore ? page.slice(0, DONE_PAGE_SIZE) : page;
-			const nextCursor = items.length > 0 ? items[items.length - 1].createdAt : undefined;
+			const nextCursor =
+				items.length > 0 ? (items[items.length - 1].completedAt ?? undefined) : undefined;
 
 			return { action: 'loadMoreDone', items, nextCursor, hasMore };
 		} catch (err) {

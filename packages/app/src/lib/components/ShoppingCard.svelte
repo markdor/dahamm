@@ -9,8 +9,8 @@
 	import { toastActionFailure } from './actionToast';
 
 	// removeDelayMs is pulled out as a prop so tests can shorten the grace
-	// period – in the app it stays at 2 seconds.
-	let { items, removeDelayMs = 2000 }: { items: ShoppingItem[]; removeDelayMs?: number } = $props();
+	// period – in the app it stays at 700ms.
+	let { items, removeDelayMs = 700 }: { items: ShoppingItem[]; removeDelayMs?: number } = $props();
 
 	// How many open items the card shows as a preview (rest as "+ N more").
 	const PREVIEW_LIMIT = 4;

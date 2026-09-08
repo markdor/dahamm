@@ -42,8 +42,15 @@
 
 	const canAdd = $derived(addValue.trim().length >= MIN_LENGTH);
 
-	function insertByCreatedAtDesc(list: ShoppingItem[], entry: ShoppingItem): ShoppingItem[] {
-		const at = list.findIndex((i) => i.createdAt < entry.createdAt);
+	// Generic so the open list (sorted by createdAt) and the done list (sorted
+	// by completedAt) can share one insertion routine.
+	function insertSortedDesc(
+		list: ShoppingItem[],
+		entry: ShoppingItem,
+		key: (item: ShoppingItem) => string
+	): ShoppingItem[] {
+		const entryKey = key(entry);
+		const at = list.findIndex((i) => key(i) < entryKey);
 		const index = at === -1 ? list.length : at;
 		return [...list.slice(0, index), entry, ...list.slice(index)];
 	}
@@ -97,12 +104,24 @@
 					if (item.done) {
 						doneItems = doneItems.filter((i) => i.id !== item.id);
 						doneCount = Math.max(0, doneCount - 1);
-						openItems = insertByCreatedAtDesc(openItems, { ...item, done: false });
+						openItems = insertSortedDesc(
+							openItems,
+							{ ...item, done: false, completedAt: null },
+							(i) => i.createdAt
+						);
 					} else {
 						openItems = openItems.filter((i) => i.id !== item.id);
 						doneCount += 1;
 						if (doneLoaded) {
-							doneItems = insertByCreatedAtDesc(doneItems, { ...item, done: true });
+							// Approximates the server-stamped completedAt (which this
+							// action's response doesn't carry back) – close enough for
+							// live sort placement; a reload picks up the exact value.
+							const completedAt = new Date().toISOString();
+							doneItems = insertSortedDesc(
+								doneItems,
+								{ ...item, done: true, completedAt },
+								(i) => i.completedAt ?? ''
+							);
 						}
 					}
 				} else {
@@ -171,7 +190,8 @@
 			id: tempId,
 			name,
 			done: false,
-			createdAt: new Date().toISOString()
+			createdAt: new Date().toISOString(),
+			completedAt: null
 		};
 		openItems = [tempItem, ...openItems];
 		addValue = '';

@@ -242,8 +242,9 @@ describe('loadMoreDone action', () => {
 			id: `d${i}`,
 			name: `Item ${i}`,
 			done: true,
-			// Strictly increasing createdAt so newest-first order is deterministic.
-			createdAt: new Date(now + i * 1000)
+			createdAt: new Date(now + i * 1000),
+			// Strictly increasing completedAt so newest-first order is deterministic.
+			completedAt: new Date(now + i * 1000)
 		}));
 		db.insert(shoppingItem).values(rows).run();
 		return rows;

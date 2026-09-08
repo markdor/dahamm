@@ -37,11 +37,18 @@ vi.mock('$app/forms', () => ({
 }));
 
 function item(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
-	return { id: name, name, done: false, createdAt: '2026-06-25T07:00:00.000Z', ...over };
+	return {
+		id: name,
+		name,
+		done: false,
+		createdAt: '2026-06-25T07:00:00.000Z',
+		completedAt: null,
+		...over
+	};
 }
 
 function doneItem(name: string, over: Partial<ShoppingItem> = {}): ShoppingItem {
-	return item(name, { done: true, ...over });
+	return item(name, { done: true, completedAt: '2026-06-25T07:05:00.000Z', ...over });
 }
 
 beforeEach(() => {
@@ -177,6 +184,42 @@ describe('Einkaufsliste-Detailseite', () => {
 
 		await expect.element(page.getByRole('button', { name: 'Tee wieder öffnen' })).toBeVisible();
 		expect(page.getByRole('button', { name: 'Mehr laden' }).elements()).toHaveLength(0);
+	});
+
+	test('live-inserts a newly completed item by completedAt, not by its (unrelated) createdAt', async () => {
+		// "Alt" was created long ago but was only ever completed once, way in the
+		// future relative to "now" – if the insertion used createdAt as the sort
+		// key (the regression this guards against), "Milch" (created more
+		// recently, in 2026) would incorrectly sort above it.
+		nextResult = {
+			type: 'success',
+			data: {
+				items: [
+					doneItem('Alt', {
+						createdAt: '2020-01-01T00:00:00.000Z',
+						completedAt: '2030-01-01T00:00:00.000Z'
+					})
+				],
+				nextCursor: undefined,
+				hasMore: false
+			}
+		};
+		renderPage([item('Milch')], 1);
+		await page.getByLabelText('Erledigte anzeigen').click();
+		await expect.element(page.getByRole('button', { name: 'Alt wieder öffnen' })).toBeVisible();
+
+		nextResult = { type: 'success' };
+		await page.getByRole('button', { name: 'Milch abhaken' }).click();
+
+		await expect
+			.element(page.getByRole('button', { name: 'Milch wieder öffnen' }), { timeout: 3000 })
+			.toBeVisible();
+
+		const names = page
+			.getByRole('button', { name: /wieder öffnen/ })
+			.elements()
+			.map((el) => el.getAttribute('aria-label'));
+		expect(names).toEqual(['Alt wieder öffnen', 'Milch wieder öffnen']);
 	});
 
 	test('completing an open item live-moves it into an already-visible done list', async () => {

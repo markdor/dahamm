@@ -110,6 +110,18 @@ describe('completeShoppingItem', () => {
 		expect(listOpenShoppingItems(db)).toEqual([]);
 	});
 
+	it('stamps completedAt so the done list can sort by completion order', () => {
+		const item = createShoppingItem(db, 'Kaffeebohnen');
+		completeShoppingItem(db, item.id);
+
+		const row = db
+			.select()
+			.from(schema.shoppingItem)
+			.where(eq(schema.shoppingItem.id, item.id))
+			.get();
+		expect(row?.completedAt).toBeInstanceOf(Date);
+	});
+
 	it('is a silent no-op for an unknown id', () => {
 		expect(() => completeShoppingItem(db, 'does-not-exist')).not.toThrow();
 	});
@@ -128,6 +140,19 @@ describe('uncompleteShoppingItem', () => {
 			.get();
 		expect(row?.done).toBe(false);
 		expect(listOpenShoppingItems(db).map((i) => i.id)).toEqual([item.id]);
+	});
+
+	it('clears completedAt so a stale timestamp cannot survive a reopen', () => {
+		const item = createShoppingItem(db, 'Kaffeebohnen');
+		completeShoppingItem(db, item.id);
+		uncompleteShoppingItem(db, item.id);
+
+		const row = db
+			.select()
+			.from(schema.shoppingItem)
+			.where(eq(schema.shoppingItem.id, item.id))
+			.get();
+		expect(row?.completedAt).toBeNull();
 	});
 
 	it('is a silent no-op for an unknown id', () => {
@@ -190,8 +215,12 @@ describe('listDoneShoppingItems', () => {
 		const b = createShoppingItem(db, 'Zweites');
 		await new Promise((r) => setTimeout(r, 5));
 		const c = createShoppingItem(db, 'Drittes');
+		// Strictly increasing completedAt, mirroring the createdAt delays above –
+		// completing items back-to-back could otherwise tie on the same millisecond.
 		completeShoppingItem(db, a.id);
+		await new Promise((r) => setTimeout(r, 5));
 		completeShoppingItem(db, b.id);
+		await new Promise((r) => setTimeout(r, 5));
 		completeShoppingItem(db, c.id);
 
 		const page = listDoneShoppingItems(db, { limit: 2 });
@@ -204,12 +233,16 @@ describe('listDoneShoppingItems', () => {
 		const b = createShoppingItem(db, 'Zweites');
 		await new Promise((r) => setTimeout(r, 5));
 		const c = createShoppingItem(db, 'Drittes');
+		// Strictly increasing completedAt, mirroring the createdAt delays above –
+		// completing items back-to-back could otherwise tie on the same millisecond.
 		completeShoppingItem(db, a.id);
+		await new Promise((r) => setTimeout(r, 5));
 		completeShoppingItem(db, b.id);
+		await new Promise((r) => setTimeout(r, 5));
 		completeShoppingItem(db, c.id);
 
 		const firstPage = listDoneShoppingItems(db, { limit: 2 });
-		const cursor = new Date(firstPage[firstPage.length - 1].createdAt);
+		const cursor = new Date(firstPage[firstPage.length - 1].completedAt!);
 		const secondPage = listDoneShoppingItems(db, { limit: 2, cursor });
 		expect(secondPage.map((i) => i.name)).toEqual(['Erstes']);
 	});
@@ -219,7 +252,7 @@ describe('listDoneShoppingItems', () => {
 		completeShoppingItem(db, a.id);
 
 		const firstPage = listDoneShoppingItems(db, { limit: 50 });
-		const cursor = new Date(firstPage[firstPage.length - 1].createdAt);
+		const cursor = new Date(firstPage[firstPage.length - 1].completedAt!);
 		const secondPage = listDoneShoppingItems(db, { limit: 50, cursor });
 		expect(secondPage).toEqual([]);
 	});

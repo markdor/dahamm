@@ -6,7 +6,7 @@
  * `svelte/valid-prop-names-in-kit-pages`). Test seam, analogous to
  * `MAGIC_LINK_DEBUG_PATH` in auth.ts – not used by the app itself.
  */
-let graceDelayMs = 2000;
+let graceDelayMs = 700;
 
 export function getGraceDelayMs(): number {
 	return graceDelayMs;

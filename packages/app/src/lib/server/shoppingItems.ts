@@ -21,10 +21,16 @@ export class ShoppingItemValidationError extends Error {
 	}
 }
 
-// Map a DB row to the shared domain type. createdAt crosses the JSON boundary
-// (load → page, API → bot), so it is serialised as an ISO string.
+// Map a DB row to the shared domain type. createdAt/completedAt cross the
+// JSON boundary (load → page, API → bot), so they are serialised as ISO strings.
 function toDomain(row: ShoppingItemRow): ShoppingItem {
-	return { id: row.id, name: row.name, done: row.done, createdAt: row.createdAt.toISOString() };
+	return {
+		id: row.id,
+		name: row.name,
+		done: row.done,
+		createdAt: row.createdAt.toISOString(),
+		completedAt: row.completedAt ? row.completedAt.toISOString() : null
+	};
 }
 
 /** All still-open items, newest first (createdAt descending) – matches the
@@ -58,7 +64,13 @@ function validateName(rawName: string): string {
  */
 export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
 	const name = validateName(rawName);
-	const row: ShoppingItemRow = { id: randomUUID(), name, done: false, createdAt: new Date() };
+	const row: ShoppingItemRow = {
+		id: randomUUID(),
+		name,
+		done: false,
+		createdAt: new Date(),
+		completedAt: null
+	};
 	db.insert(shoppingItem).values(row).run();
 	return toDomain(row);
 }
@@ -66,17 +78,25 @@ export function createShoppingItem(db: Db, rawName: string): ShoppingItem {
 /**
  * Marks an item as done. Idempotent and silent if the id is unknown – the
  * caller (a checkbox tap) only cares that the item ends up off the open list.
+ * Stamps `completedAt` so the "erledigt" list can sort by completion order.
  */
 export function completeShoppingItem(db: Db, id: string): void {
-	db.update(shoppingItem).set({ done: true }).where(eq(shoppingItem.id, id)).run();
+	db.update(shoppingItem)
+		.set({ done: true, completedAt: new Date() })
+		.where(eq(shoppingItem.id, id))
+		.run();
 }
 
 /**
  * Reopens a done item. Mirror of {@link completeShoppingItem}: idempotent and
- * silent if the id is unknown.
+ * silent if the id is unknown. Clears `completedAt` – re-completing later
+ * stamps a fresh value rather than keeping the stale one.
  */
 export function uncompleteShoppingItem(db: Db, id: string): void {
-	db.update(shoppingItem).set({ done: false }).where(eq(shoppingItem.id, id)).run();
+	db.update(shoppingItem)
+		.set({ done: false, completedAt: null })
+		.where(eq(shoppingItem.id, id))
+		.run();
 }
 
 /**
@@ -90,22 +110,23 @@ export function renameShoppingItem(db: Db, id: string, rawName: string): void {
 }
 
 /**
- * Done items, newest first, keyset-paginated over `createdAt` (no OFFSET scan
- * – stable even while more items are being completed during pagination).
- * `cursor` is the `createdAt` of the last item from the previous page.
+ * Done items, most recently completed first, keyset-paginated over
+ * `completedAt` (no OFFSET scan – stable even while more items are being
+ * completed during pagination). `cursor` is the `completedAt` of the last
+ * item from the previous page.
  */
 export function listDoneShoppingItems(
 	db: Db,
 	{ limit, cursor }: { limit: number; cursor?: Date }
 ): ShoppingItem[] {
 	const condition = cursor
-		? and(eq(shoppingItem.done, true), lt(shoppingItem.createdAt, cursor))
+		? and(eq(shoppingItem.done, true), lt(shoppingItem.completedAt, cursor))
 		: eq(shoppingItem.done, true);
 	return db
 		.select()
 		.from(shoppingItem)
 		.where(condition)
-		.orderBy(desc(shoppingItem.createdAt))
+		.orderBy(desc(shoppingItem.completedAt))
 		.limit(limit)
 		.all()
 		.map(toDomain);
