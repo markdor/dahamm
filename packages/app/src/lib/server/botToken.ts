@@ -5,7 +5,8 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 type Schema = { botToken: typeof botToken };
 type Db = BetterSQLite3Database<Schema>;
 
-function sha256(value: string): Buffer {
+/** Also hashes the tasting link tokens (`tastingToken.ts`) – same store-only-the-hash approach. */
+export function sha256(value: string): Buffer {
 	return createHash('sha256').update(value).digest();
 }
 
