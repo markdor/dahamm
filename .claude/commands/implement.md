@@ -1,6 +1,6 @@
 ---
 description: Einstieg in die Implementierung eines GitHub Issues – Kontext laden → Codebase-Analyse → Implementierungsplan. Aufruf: /implement <Issue-Nummer>
-model: sonnet
+model: opus
 effort: max
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Tiefenprüfung eines Pull Requests vor dem Merge – Qualität, Security, UX, Clean Code, Architektur gegen CLAUDE.md. Aufruf: /pr-review <PR-Nummer>
-model: sonnet
+model: opus
 effort: max
 ---
 
