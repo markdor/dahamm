@@ -5,6 +5,9 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { verifyBotToken } from '$lib/server/botToken';
 import { evaluateGuard, isApiPath } from '$lib/server/guard';
+import { createHandleError } from '$lib/server/handleError';
+import { logger } from '$lib/server/logger';
+import { getSecurityHeaders } from '$lib/server/securityHeaders';
 
 // Lets Better Auth own everything under /auth/* (sign-in, magic-link verify, …).
 // For all other paths svelteKitHandler just calls resolve() and the chain
@@ -28,13 +31,16 @@ function isBearerAuthorized(request: Request): boolean {
 }
 
 // Closed app: nothing is public except the login page, the Better Auth
-// endpoints and static assets. /api/* is the bot surface and uses a bearer
-// token instead of a session redirect. The decision itself lives in
+// endpoints, static assets and the tasting token links (matched by exact
+// route ID – SvelteKit has already resolved the route here, also for
+// __data.json requests and action POSTs). /api/* is the bot surface and uses a
+// bearer token instead of a session redirect. The decision itself lives in
 // evaluateGuard so it can be unit-tested without a full request.
 const guardHandle: Handle = ({ event, resolve }) => {
 	const decision = evaluateGuard(event.url.pathname, {
 		authenticated: Boolean(event.locals.user),
-		bearerAuthorized: isApiPath(event.url.pathname) && isBearerAuthorized(event.request)
+		bearerAuthorized: isApiPath(event.url.pathname) && isBearerAuthorized(event.request),
+		routeId: event.route.id
 	});
 
 	switch (decision.action) {
@@ -50,4 +56,18 @@ const guardHandle: Handle = ({ event, resolve }) => {
 	}
 };
 
-export const handle = sequence(authHandle, sessionHandle, guardHandle);
+// Route-specific headers (tasting token page and admin pages, see
+// securityHeaders.ts), set after resolve() so page, __data.json, action
+// responses and error pages all carry them.
+const securityHeadersHandle: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+	for (const [name, value] of Object.entries(getSecurityHeaders(event.route.id))) {
+		response.headers.set(name, value);
+	}
+	return response;
+};
+
+export const handle = sequence(authHandle, sessionHandle, guardHandle, securityHeadersHandle);
+
+// Logs the route ID instead of the pathname, which may contain a token.
+export const handleError = createHandleError(logger);
